@@ -29,7 +29,6 @@ export default function LoginPage() {
         className="bg-white rounded-2xl shadow-xl p-10 w-full max-w-md space-y-6"
       >
         <h2 className="text-3xl font-bold text-gray-800 text-center">Login to WorkManager</h2>
-
         <input
           type="text"
           placeholder="Username"

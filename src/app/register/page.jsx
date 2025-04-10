@@ -16,38 +16,47 @@ export default function Register() {
 
     const data = await res.json();
     alert(data.message || data.error);
-      const loggedandsign= await signIn("credentials", {
-          username: form.username,
-          password: form.password,
-          redirect: false,
-        });
-        if(!loggedandsign.error && res.status===201){
-            return router.push("/dashboard")
-        }
-   
 
+    // Auto-login after registration
+    const loggedAndSignedIn = await signIn("credentials", {
+      username: form.username,
+      password: form.password,
+      redirect: false,
+    });
+
+    if (!loggedAndSignedIn.error && res.status === 201) {
+      return router.push("/dashboard");
+    }
   };
 
   return (
-    <div className="flex justify-center items-center text-2xl flex-col">
-      <form onSubmit={handleSubmit} className="flex flex-col mt-40 p-10">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-2xl shadow-xl p-10 w-full max-w-md space-y-6"
+      >
+        <h2 className="text-3xl font-bold text-gray-800 text-center">Create a WorkManager Account</h2>
+
         <input
           onChange={(e) => setForm({ ...form, username: e.target.value })}
           placeholder="Username"
-          className="p-10 border rounded-full mb-2"
+          className="w-full px-5 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
         />
         <input
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           placeholder="Email"
-          className="p-10 border rounded-full mb-2"
+          className="w-full px-5 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
         />
         <input
           type="password"
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           placeholder="Password"
-          className="p-10 border rounded-full mb-2"
+          className="w-full px-5 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black"
         />
-        <button className="bg-white text-black items-center border rounded-full">
+        <button
+          type="submit"
+          className="w-full bg-indigo-600 text-white py-3 rounded-full font-semibold shadow hover:opacity-90 transition"
+        >
           Register
         </button>
       </form>

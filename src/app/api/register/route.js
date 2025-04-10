@@ -4,11 +4,12 @@ import User from "@/models/Userschema";
 import { Dbconnect } from "@/helper/dbConnect";
 
 export async function POST(req) {
+  await Dbconnect();
+ 
   try {
     const { username, email, password } = await req.json();
 
-    await Dbconnect();
-
+  
     const existingUser = await User.findOne({ email });
     if (existingUser) return NextResponse.json({ error: "User already exists" }, { status: 400 });
 
