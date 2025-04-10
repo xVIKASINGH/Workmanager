@@ -120,7 +120,7 @@ const [completedtask,setcompletedtask]=useState([]);
         headers:{"Content-Type":"application/json"},
       })
       const data=await res.json();
-     
+     console.log(data)
       setalltask((prev) => prev.filter((item) => item._id !== id));
 
       setcompletedtask((prev) => prev.filter((item) => item._id !== id));
