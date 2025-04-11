@@ -3,7 +3,7 @@ import { Dbconnect } from "@/helper/dbConnect";
 import { NextResponse } from "next/server";
 
 export async function DELETE(request,{params}) {
-    const {id}=params;
+    const {id}=await params;
     try {
         await Dbconnect();
         await Task.findOneAndDelete(id);

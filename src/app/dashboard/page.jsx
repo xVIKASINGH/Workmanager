@@ -17,6 +17,8 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { CheckCheck ,Trash} from 'lucide-react';
+
+
 export default function Dashboard() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -143,7 +145,9 @@ const [completedtask,setcompletedtask]=useState([]);
           <StatCard title="Completed" value={completedtask.length || 0} color="bg-green-500" />
           <StatCard title="Pending" value={alltask.length-completedtask.length || 0} color="bg-yellow-500" />
         </div>
-
+        <button className="p-5 mt-4 border rounded-xl bg-black text-white"><a href="/request"><i className="fa-solid fa-user-plus"></i></a></button>
+        <button className="p-5 mt-4 border rounded-xl bg-black text-white ml-2"><a href="/search"><i className="fa-solid fa-magnifying-glass"></i> &nbsp;Search User</a></button>
+         
         <div className="mt-10">
           <h2 className="text-2xl font-semibold text-gray-700 mb-4">Quick Actions</h2>
           <div className="flex flex-wrap gap-4">

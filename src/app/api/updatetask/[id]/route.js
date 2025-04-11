@@ -4,7 +4,7 @@ import { Dbconnect } from "@/helper/dbConnect";
 
 export async function PUT(request,{params}) {
     console.log("API HIT")
-    const {id}=params;
+    const {id}=await params;
 try {
     await Dbconnect();
     const task=await Task.findById(id);
