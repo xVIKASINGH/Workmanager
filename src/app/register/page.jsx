@@ -17,7 +17,7 @@ export default function Register() {
     const data = await res.json();
     alert(data.message || data.error);
 
-    // Auto-login after registration
+   
     const loggedAndSignedIn = await signIn("credentials", {
       username: form.username,
       password: form.password,

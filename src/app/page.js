@@ -6,7 +6,7 @@ export default function Home() {
 
     return (
       <main className="bg-white text-gray-900">
-        {/* Hero Section */}
+        
         <section className="min-h-screen flex flex-col justify-center items-center text-center p-6 bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
           <h1 className="text-5xl font-bold mb-4">Welcome to WorkManager 🚀</h1>
           <p className="text-xl mb-6 max-w-xl">
@@ -46,7 +46,6 @@ export default function Home() {
           )}
         </section>
   
-        {/* Features Section */}
         <section className="py-16 px-6 max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12">Features</h2>
           <div className="grid md:grid-cols-3 gap-8 text-center">
@@ -64,8 +63,7 @@ export default function Home() {
             </div>
           </div>
         </section>
-  
-        {/* Testimonials */}
+
         <section className="py-16 bg-gray-50 text-center px-6">
           <h2 className="text-3xl font-bold mb-10">What Our Users Say</h2>
           <div className="max-w-3xl mx-auto space-y-8">

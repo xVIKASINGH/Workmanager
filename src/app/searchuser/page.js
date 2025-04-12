@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,8 +15,10 @@ export default function SearchUserPage() {
   const [error, setError] = useState("");
   const [searchmyself,setsearchmyself]=useState(false);
   const [sendreq,setsendreq]=useState([]);
+    const [alreadyconnected,setalreadyconnected]=useState(false);
   const router=useRouter();
  if (status === "loading") return <p>Loading session...</p>;
+ 
  if (!session) return <p>User not logged in</p>;
 
   const handleSearch = async () => {
@@ -34,7 +36,9 @@ export default function SearchUserPage() {
       }else{
         setsearchmyself(false)
       }
-   
+      if(res.status===203){
+        setalreadyconnected(true);
+      }
       setUser(data.user);
     } catch (err) {
       setError(err.message);
@@ -127,25 +131,33 @@ export default function SearchUserPage() {
   >
     <i className="fa-solid fa-user"></i> View Profile
   </Button>
+) : alreadyconnected ? (
+  <Button
+    disabled
+    className="bg-green-500 text-white px-6 py-2 rounded-full font-medium cursor-not-allowed"
+  >
+    <i className="fa-solid fa-check mr-2"></i>Connected
+  </Button>
 ) : sendreq.includes(user._id) ? (
   <Button
     disabled
     className="bg-gray-300 text-gray-600 px-6 py-2 rounded-full font-medium cursor-not-allowed"
   >
-    <i className="fa-solid fa-check mr-2"></i>Request Sent
+    <i className="fa-solid fa-clock mr-2"></i>Request Sent
   </Button>
 ) : (
   <Button
     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium shadow-md"
-    onClick={async() => {
+    onClick={async () => {
       console.log("Add Connection clicked 🔥");
       const id = await handlerequest();
-      setsendreq(prev => [...prev,id]); 
+      setsendreq((prev) => [...prev, id]);
     }}
   >
     <i className="fa-solid fa-user-plus mr-2"></i>Add Connection
   </Button>
 )}
+
 
             
             </CardContent>

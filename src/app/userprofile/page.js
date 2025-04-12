@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@headlessui/react";
+import { useRouter } from "next/navigation";
 
 export default function UserProfilePage() {
   const { data: session, status } = useSession();
@@ -12,58 +13,65 @@ export default function UserProfilePage() {
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
   const [connections, setConnections] = useState([]);
+  const router = useRouter();
 
+  
   useEffect(() => {
-    if (status !== "authenticated") return;
-    const userId = session?.user?.id;
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
+    }
 
-    const fetchConnections = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/request/${userId}`);
-        const data = await res.json();
+    if (status === "authenticated") {
+      fetchConnections();
+      fetchAcceptedConnections();
+    }
+  }, [status, session, router]);
 
-        const inReq = data.requests.filter(
-          (req) =>
-            (typeof req.reciever === "object"
-              ? req.reciever._id?.toString?.()
-              : req.reciever) === userId &&
-            req.status !== "accepted" &&
-            req.status !== "rejected"
-        );
-        
-        const outReq = data.requests.filter(
-          (req) =>
-            (typeof req.sender === "object"
-              ? req.sender._id?.toString?.()
-              : req.sender) === userId &&
-            req.status !== "accepted" &&
-            req.status !== "rejected"
-        );
-        
-    
-        setIncoming(inReq);
-        setOutgoing(outReq);
-      } catch (error) {
-        console.error("Error fetching connections", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchConnections = async () => {
+    if (!session?.user?.id) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/request/${session.user.id}`);
+      const data = await res.json();
 
-    fetchConnections();
-    fetchAcceptedConnections();
-  }, [status, session]);
+      const userId = session.user.id;
+      const inReq = data.requests.filter(
+        (req) =>
+          (typeof req.reciever === "object"
+            ? req.reciever._id?.toString?.()
+            : req.reciever) === userId &&
+          req.status !== "accepted" &&
+          req.status !== "rejected"
+      );
+
+      const outReq = data.requests.filter(
+        (req) =>
+          (typeof req.sender === "object"
+            ? req.sender._id?.toString?.()
+            : req.sender) === userId &&
+          req.status !== "accepted" &&
+          req.status !== "rejected"
+      );
+
+      setIncoming(inReq);
+      setOutgoing(outReq);
+    } catch (error) {
+      console.error("Error fetching connections", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchAcceptedConnections = async () => {
     try {
-      const res = await fetch("/api/connections", { method: "GET" });
+      const res = await fetch("/api/connections");
       const data = await res.json();
       if (res.ok) {
         setConnections(data.connections);
       }
     } catch (error) {
-      console.log("Error fetching accepted connections:", error);
+      console.error("Error fetching accepted connections:", error);
     }
   };
 
@@ -78,10 +86,8 @@ export default function UserProfilePage() {
       const data = await res.json();
       if (res.ok) {
         alert(data.message || `Connected with ${user.username}`);
-        
-        setIncoming((prev)=>prev.filter((req)=>req.id!==reqId));
+        setIncoming((prev) => prev.filter((req) => req.id !== reqId));
       }
-      
     } catch (error) {
       console.error("Error accepting request", error);
     } finally {
@@ -100,8 +106,7 @@ export default function UserProfilePage() {
       const data = await res.json();
       if (res.ok) {
         alert(data.message || "Request deleted successfully");
-        setOutgoing((prev)=>prev.filter((req)=>req.id!==reqId));
-
+        setOutgoing((prev) => prev.filter((req) => req.id !== reqId));
       }
     } catch (error) {
       console.error("Error deleting request", error);
@@ -109,6 +114,10 @@ export default function UserProfilePage() {
       setLoading(false);
     }
   };
+
+  if (status === "loading" || loading) {
+    return <p>Loading...</p>;
+  }
 
   if (status === "loading" || loading || !session) {
     return (
