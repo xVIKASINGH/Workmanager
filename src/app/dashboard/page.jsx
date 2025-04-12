@@ -30,7 +30,7 @@ const [completedtask,setcompletedtask]=useState([]);
   const [alltask, setalltask] = useState([]);
   const [progress, setProgress] = useState(13);
   const [loadingTasks, setLoadingTasks] = useState(false);
-
+  
   useEffect(() => {
 
     const timer = setTimeout(() => setProgress(66), 500);
@@ -40,6 +40,8 @@ const [completedtask,setcompletedtask]=useState([]);
   if (status === "loading") {
     return <Progress value={progress} className="w-[60%]" />;
   }
+  console.log("this is your id",session?.user?.id)
+const {id}=session?.user?.id
 
   if (!session) {
     router.push("/login");
@@ -145,8 +147,11 @@ const [completedtask,setcompletedtask]=useState([]);
           <StatCard title="Completed" value={completedtask.length || 0} color="bg-green-500" />
           <StatCard title="Pending" value={alltask.length-completedtask.length || 0} color="bg-yellow-500" />
         </div>
-        <button className="p-5 mt-4 border rounded-xl bg-black text-white"><a href="/request"><i className="fa-solid fa-user-plus"></i></a></button>
-        <button className="p-5 mt-4 border rounded-xl bg-black text-white ml-2"><a href="/search"><i className="fa-solid fa-magnifying-glass"></i> &nbsp;Search User</a></button>
+        <button className="p-5 mt-4 border rounded-xl bg-black text-white"><a href={`/userprofile`}>
+  <i className="fa-solid fa-user-plus"></i>
+</a>
+</button>
+        <button className="p-5 mt-4 border rounded-xl bg-black text-white ml-2"><a href="/searchuser"><i className="fa-solid fa-magnifying-glass"></i> &nbsp;Search User</a></button>
          
         <div className="mt-10">
           <h2 className="text-2xl font-semibold text-gray-700 mb-4">Quick Actions</h2>

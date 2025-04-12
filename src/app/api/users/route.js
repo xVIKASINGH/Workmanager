@@ -1,22 +1,20 @@
 import { Dbconnect } from "@/helper/dbConnect"
+import { User } from "lucide-react";
 import { NextResponse } from "next/server"
 Dbconnect();
-export  function GET(request){
-    const user=[
-        {
-            author:"vikas singh",
-            content:"manali picks",
-            date:new Date(),
-        },
-        {
-            author:"rudra yadav",
-            content:"payment screenshot  pay? kab krega",
-            date:new Date(),
+export  async function GET(request,{params}){
+    await Dbconnect();
+    const {id}=await params;
+    try {
+        const user=await User.findByid(id);
+        if(!user){
+            return NextResponse.json({message:"user not found"},{status:201});
         }
-    ]
-   return NextResponse.json(user)
-}
-export function DELETE(request){
-    console.log("user requested for delete ")
-    return NextResponse.json({message:"aa bhai kr rha delete"},{status:"201",statusText:"statustext"})
+
+        return NextResponse.json({user},{status:201})
+    } catch (error) {
+        console.error("Error while fetching");
+        return NextResponse.json({message:"Internal server error "},{status:500})
+    }
+  
 }

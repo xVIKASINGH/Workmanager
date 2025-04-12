@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-
+import { Schema } from "mongoose";
 const ConnectionSchema=new mongoose.Schema({
     sender:{
-       type: Schema.Types.ObjectId,
+       type:Schema.Types.ObjectId,
         ref:"User"
     },
     reciever:{
@@ -16,6 +16,6 @@ const ConnectionSchema=new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
 })
 
-const Request= mongoose.model("Request",ConnectionSchema);
+const Collab= mongoose.models.Collab || mongoose.model("Collab",ConnectionSchema);
 
-export default Request;
+export default Collab
