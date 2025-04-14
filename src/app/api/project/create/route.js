@@ -10,16 +10,26 @@ export async function POST(request,{params}) {
       const title=formData.get("title");
       const description=formData.get('description');
       const deadline=formData.get("deadline")
-      const teamMembers=formData.get("teamMembers");
+      const rawteamMembers = formData.getAll("teamMembers");
+      const teamMembers=JSON.parse(rawteamMembers);
       const files=formData?.get('files')
+      if (!title || !description || !deadline || !teamMembers) {
+        return Response.json({ error: "Missing fields" }, { status: 400 });
+      }
+    
       try {
         await Dbconnect();
+        const teammates = teamMembers.map((user) => ({
+          userId:user._id,                 
+          assigntask: [],
+          comments: [],
+        }));
       const newproject=new Project({
         creator:server.user.id,
         title,
         description,
         deadline,
-        teamMembers,
+        teammates,
         files
       })
     console.log(formData)

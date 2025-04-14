@@ -50,7 +50,8 @@ export default function Home() {
                   Logout
                 </Button>
               </>
-            ) : (
+            ) : 
+            (
               <>
                 <Button size="lg" className="w-full" onClick={() => signIn()}>
                   Login

@@ -83,7 +83,7 @@ export default function CreateProjectPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!title || !description || !deadline) {
+    if (!title || !description || !deadline ) {
       toast.error("Please fill out all required fields")
       return
     }
@@ -106,7 +106,7 @@ export default function CreateProjectPage() {
         method: "POST",
         body: formData,
       })
-console.log(res)
+
       const data = await res.json()
       if (res.ok) {
         toast.success("Project created successfully")

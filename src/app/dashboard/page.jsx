@@ -20,7 +20,8 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Users
+  Users,
+  Boxes
 } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
@@ -159,8 +160,13 @@ export default function Dashboard() {
 
           <div className="flex gap-2 mt-4 md:mt-0">
           <Button variant="outline" size="sm" onClick={() => router.push("/project")}>
-              <Users className="h-4 w-4 mr-2" />
+          <Users className="h-4 w-4 mr-2" />
+             
              Create group project
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => router.push("/myprojects")}>
+            <Boxes className="h-4 w-4 mr-2" />
+            Group projects
             </Button>
             <Button variant="outline" size="sm" onClick={() => router.push("/userprofile")}>
               <User className="h-4 w-4 mr-2" />
