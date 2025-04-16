@@ -14,13 +14,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 export default function SearchUserPage() {
   const { data: session, status } = useSession()
   const [username, setUsername] = useState("")
-  const [user, setUser] = useState(null)
+  const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [searchmyself, setsearchmyself] = useState(false)
-  const [sendreq, setsendreq] = useState([])
-  const [alreadyconnected, setalreadyconnected] = useState(false)
+  const [sendreq, setSendreq] = useState([])
+  const [alreadyconnected, setAlreadyconnected] = useState([])
   const router = useRouter()
+
   if (status === "loading") {
     return (
       <div className="container max-w-4xl mx-auto px-4 py-12 flex items-center justify-center">
@@ -52,31 +52,27 @@ export default function SearchUserPage() {
     if (!username) return
     setLoading(true)
     setError("")
-    setUser(null)
+    setUsers([])
     try {
       const res = await fetch(`/api/searchuser/${username}`)
       const data = await res.json()
-
+      console.log(data)
       if (!res.ok) throw new Error(data.message || "Something went wrong")
-      if (data.user.username === session.user.username) {
-        setsearchmyself(true)
-      } else {
-        setsearchmyself(false)
-      }
-      if (res.status === 203) {
-        setalreadyconnected(true)
-      }
-      setUser(data.user)
+
+      const filteredUsers = data.result.filter((u) => u._id !== session.user.id)
+      const already = data.result.filter((u) => u.isConnected === true).map((u) => u._id)
+
+      setUsers(filteredUsers)
+      setAlreadyconnected(already)
     } catch (err) {
-      setError(err.message)
+      console.log(err)
+      setError(err.message || "Something went wrong")
     } finally {
       setLoading(false)
     }
   }
 
-  const handlerequest = async () => {
-    console.log("add button clicked!")
-    setLoading(true)
+  const handleRequest = async (userId) => {
     try {
       const res = await fetch(`/api/searchuser/${username}`, {
         method: "POST",
@@ -85,20 +81,16 @@ export default function SearchUserPage() {
         },
         body: JSON.stringify({
           currentUserId: session?.user?.id,
+          targetUserId: userId,
         }),
       })
-      const data = await res.json(res)
-      const id = data.user._id
-
-      setsendreq((prev) => [...prev, id])
+      const data = await res.json()
       if (res.ok) {
         alert(data.message || "Request sent successfully")
-        return id
+        setSendreq((prev) => [...prev, userId])
       }
     } catch (error) {
       setError(error.message)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -140,75 +132,66 @@ export default function SearchUserPage() {
           </CardContent>
         </Card>
 
-        {loading && (
-          <Card className="border shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <Skeleton className="h-16 w-16 rounded-full" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-5 w-1/3" />
-                  <Skeleton className="h-4 w-1/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                </div>
-                <Skeleton className="h-10 w-32" />
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {!loading && user && (
-          <div className="animate-fadeIn">
-            <Card className="border shadow-sm overflow-hidden transition-all hover:shadow-md">
+        {loading &&
+          [1, 2].map((i) => (
+            <Card key={i} className="border shadow-sm mb-4">
               <CardContent className="p-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16">
-                      <AvatarFallback className="bg-primary/10 text-primary text-xl">
-                        {user.username?.charAt(0).toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h2 className="text-lg font-medium">{user.name}</h2>
-                      <p className="text-sm text-muted-foreground">@{user.username}</p>
-                      <p className="text-xs text-muted-foreground">{user.email}</p>
-                    </div>
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-16 w-16 rounded-full" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-5 w-1/3" />
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-4 w-1/2" />
                   </div>
-
-                  {searchmyself ? (
-                    <Button onClick={() => router.push("/userprofile")} className="w-full sm:w-auto">
-                      <User className="mr-2 h-4 w-4" />
-                      View Profile
-                    </Button>
-                  ) : alreadyconnected ? (
-                    <Button variant="outline" disabled className="w-full sm:w-auto">
-                      <Check className="mr-2 h-4 w-4 text-green-500" />
-                      Connected
-                    </Button>
-                  ) : sendreq.includes(user._id) ? (
-                    <Button variant="outline" disabled className="w-full sm:w-auto">
-                      <Clock className="mr-2 h-4 w-4" />
-                      Request Sent
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={async () => {
-                        console.log("Add Connection clicked 🔥")
-                        const id = await handlerequest()
-                        setsendreq((prev) => [...prev, id])
-                      }}
-                      className="w-full sm:w-auto"
-                    >
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Add Connection
-                    </Button>
-                  )}
+                  <Skeleton className="h-10 w-32" />
                 </div>
               </CardContent>
             </Card>
+          ))}
+
+        {!loading && users.length > 0 && (
+          <div className="space-y-4 animate-fadeIn">
+            {users.map((user) => (
+              <Card key={user._id} className="border shadow-sm hover:shadow-md transition-all">
+                <CardContent className="p-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-16 w-16">
+                        <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                          {user.username?.charAt(0).toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h2 className="text-lg font-medium">{user.name}</h2>
+                        <p className="text-sm text-muted-foreground">@{user.username}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+
+                    {alreadyconnected.includes(user._id) ? (
+                      <Button variant="outline" disabled className="w-full sm:w-auto">
+                        <Check className="mr-2 h-4 w-4 text-green-500" />
+                        Connected
+                      </Button>
+                    ) : sendreq.includes(user._id) ? (
+                      <Button variant="outline" disabled className="w-full sm:w-auto">
+                        <Clock className="mr-2 h-4 w-4" />
+                        Request Sent
+                      </Button>
+                    ) : (
+                      <Button onClick={() => handleRequest(user._id)} className="w-full sm:w-auto">
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Add Connection
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
 
-        {!loading && !user && !error && (
+        {!loading && users.length === 0 && !error && (
           <div className="flex flex-col items-center justify-center text-center py-12 bg-muted/30 rounded-lg border border-dashed">
             <div className="rounded-full bg-muted p-3 mb-4">
               <Search className="h-6 w-6 text-muted-foreground" />

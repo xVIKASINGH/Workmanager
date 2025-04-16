@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 
 import User from "@/models/Userschema";
 import { Dbconnect } from "@/helper/dbConnect";
@@ -9,25 +8,37 @@ import { authOptions } from "@/lib/authOptions";
 
 export async function GET(request,{params}) {
     const {username}=await params;
+    console.log(username)
   const session=await getServerSession(authOptions);
     await Dbconnect();
     try {
-        const user=await User.findOne({
-           username:username
-        })
+        const users = await User.find({
+            username: { $regex: `^${username}`, $options: "i" },
+          })
+            .select("username email collaborators") 
+            .limit(10);
 
       
-        if(!user){
-            return NextResponse.json({message:"No user found for this username"},{status:403})
-        }
-        const connected = user.collaborators.filter(
-            (u) => u._id?.toString?.() === session.user.id
-          );
-          
-        if(connected.length>0){
-            return NextResponse.json({message:"already connected",user},{status:203})
-        }
-        return NextResponse.json({user},{status:201})
+            if (users.length === 0) {
+                return NextResponse.json(
+                  { message: "No user found for this username" },
+                  { status: 404 }
+                );
+              }
+        const result = users.map((user) => {
+            const isConnected = user.collaborators?.some(
+              (u) => u?.toString() === session.user.id
+            );
+            return {
+              _id: user._id,
+              username: user.username,
+              email: user.email,
+              isConnected,
+            };
+          });
+           console.log(result)
+       
+        return NextResponse.json({result},{status:201})
     } catch (error) {
         console.error("Error while fetching user details",error);
         return NextResponse.json({message:"Error while saerhing req"})
@@ -35,10 +46,10 @@ export async function GET(request,{params}) {
 }
 
 export async function POST(request,{params}){
-    console.log("api hit")
+    
   
  const {currentUserId}=await request.json()
- console.log(currentUserId)  
+ 
   
     const {username}=await params;
     try {
@@ -61,7 +72,7 @@ export async function POST(request,{params}){
           );
     } catch (error) {
         console.error("Request send error:", error);
-    return NextResponse.json(
+       return NextResponse.json(
       { message: "Something went wrong" },
       { status: 500 }
     );
