@@ -145,7 +145,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Section */}
       <section className="relative overflow-hidden border-b">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-blue-50 z-0" />
         <div className="absolute inset-0 bg-[url('/placeholder.svg?height=200&width=200')] bg-repeat opacity-[0.02] z-0" />
@@ -164,7 +163,7 @@ export default function Home() {
             task management platform designed for modern teams.
           </p>
 
-          {/* Updated hero buttons */}
+       
           <div className="w-full max-w-md mx-auto">
             {session ? (
               <Button

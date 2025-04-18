@@ -18,6 +18,7 @@ export async function GET(){
     if(!projects){
      return NextResponse.json({message:"No project founds"})
     }
+    
    
     return NextResponse.json({message:"Prjects fetch successfully",projects},{status:201});
   } catch (error) {

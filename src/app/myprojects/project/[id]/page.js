@@ -24,7 +24,9 @@ import {
   AlertCircle,
   Plus,
   Trash2,
-  X
+  X,
+  Star,
+  StarIcon
 } from "lucide-react";
 import {
   Dialog,
@@ -64,14 +66,16 @@ const ProjectDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [isCreator, setIsCreator] = useState(false);
   const dialogCloseRef = useRef(null);
-
+  
  
+  const [taskRatings, setTaskRatings] = useState({});
+  const [taskReviews, setTaskReviews] = useState({});
+  
   const [formData, setFormData] = useState({
     teammateId: "",
     task: "",
     dueDate: "",
   });
-
   
   useEffect(() => {
     const fetchProjectInfo = async () => {
@@ -82,15 +86,30 @@ const ProjectDetailsPage = () => {
 
         if (res.ok) {
           setProject(data.project);
-          console.log(data.project)
+          console.log(data.project);
          
           if (session?.user?.id && data.project.creator) {
             setIsCreator(session.user.id === data.project.creator._id);
           }
+          
+
+          const ratings = {};
+          const reviews = {};
+          
+          data.project.teammates?.forEach(teammate => {
+            teammate.assigntask?.forEach(task => {
+              if (task._id) {
+                ratings[task._id] = task.rating || 1;
+                reviews[task._id] = task.reviewNotes || "";
+              }
+            });
+          });
+          
+          setTaskRatings(ratings);
+          setTaskReviews(reviews);
         }
       } catch (error) {
         console.error("Failed to fetch project:", error);
-       
       } finally {
         setLoading(false);
       }
@@ -103,7 +122,7 @@ const ProjectDetailsPage = () => {
 
 
   const handleAssignTask = async (e) => {
-  
+    e.preventDefault();
     try {
       const response = await fetch(`/api/project/myprojects/assigntask/${id}`, {
         method: "POST",
@@ -135,26 +154,22 @@ const ProjectDetailsPage = () => {
  
           setProject(updatedProject);
         }
-
       
         setFormData({
           teammateId: "",
           task: "",
           dueDate: "",
         });
- 
-      
       } else {
         throw new Error(data.message || "Failed to assign task");
       }
     } catch (error) {
       console.error("Error assigning task:", error);
-    
     }
   };
 
   const handleDeleteProject = async () => {
-    console.log(id)
+    console.log(id);
     try {
       const response = await fetch(`/api/project/myprojects/delete/${id}`, {
         method: "DELETE",
@@ -163,20 +178,77 @@ const ProjectDetailsPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-       
         router.push("/dashboard"); 
       } else {
         throw new Error(data.message || "Failed to delete project");
       }
     } catch (error) {
       console.error("Error deleting project:", error);
+    }
+  };
+  
+  const handleReview = async (taskId) => {
+    try {
+      const rating = taskRatings[taskId] || 1;
+      const reviewNotes = taskReviews[taskId] || "";
       
+      const response = await fetch(`/api/project/myprojects/review-task/${id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ taskId, rating, reviewNotes }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+      
+        const updatedProject = { ...project };
+       
+        let taskFound = false;
+        
+        updatedProject.teammates.forEach(teammate => {
+          teammate.assigntask?.forEach(task => {
+            if (task._id === taskId) {
+              task.rating = rating;
+              task.reviewNotes = reviewNotes;
+              task.reviewed = true;
+              taskFound = true;
+            }
+          });
+        });
+        
+        if (taskFound) {
+          setProject(updatedProject);
+          alert("Review submitted successfully!");
+        }
+      } else {
+        throw new Error(data.message || "Failed to submit review");
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      alert("Failed to submit review. Please try again.");
     }
   };
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleRatingChange = (taskId, rating) => {
+    setTaskRatings(prev => ({
+      ...prev,
+      [taskId]: rating
+    }));
+  };
+  
+  const handleReviewNotesChange = (taskId, notes) => {
+    setTaskReviews(prev => ({
+      ...prev,
+      [taskId]: notes
+    }));
   };
 
   if (loading) {
@@ -223,7 +295,6 @@ const ProjectDetailsPage = () => {
     }
   };
 
-
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
@@ -233,10 +304,38 @@ const ProjectDetailsPage = () => {
     }).format(date);
   };
 
-
   const formatDateForInput = (dateString) => {
     const date = new Date(dateString);
     return date.toISOString().split('T')[0];
+  };
+  
+
+  const renderStarRating = (taskId) => {
+    const rating = taskRatings[taskId] || 1;
+    const stars = [];
+    
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <button
+          key={i}
+          type="button"
+          onClick={() => handleRatingChange(taskId, i)}
+          className="focus:outline-none"
+        >
+          {i <= rating ? (
+            <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+          ) : (
+            <Star className="h-5 w-5 text-gray-300" />
+          )}
+        </button>
+      );
+    }
+    
+    return (
+      <div className="flex space-x-1">
+        {stars}
+      </div>
+    );
   };
 
   return (
@@ -323,11 +422,10 @@ const ProjectDetailsPage = () => {
                       <Button type="button" variant="outline">Cancel</Button>
                     </DialogClose>
                   
-                    <Button ref={dialogCloseRef} type="submit"variant='outline'>Assign Task</Button>
+                    <Button type="submit" variant="outline">Assign Task</Button>
                     <DialogClose asChild>
-          <button type="button" ref={dialogCloseRef} style={{ display: "none" }} />
-        </DialogClose>
-                
+                      <button type="button" ref={dialogCloseRef} style={{ display: "none" }} />
+                    </DialogClose>
                   </DialogFooter>
                 </form>
               </DialogContent>
@@ -511,6 +609,60 @@ const ProjectDetailsPage = () => {
                                     <Calendar className="h-3 w-3" />
                                     <span>Due: {task.dueDate ? formatDate(task.dueDate) : "No deadline"}</span>
                                   </div>
+                                  
+                                 
+                                  {task.status === 'completed' && isCreator && (
+                                    <div className="mt-3 pt-3 border-t">
+                                      <h5 className="text-sm font-medium mb-2">Review Task</h5>
+                                    
+                                      {!task.reviewed ? (
+                                        <div className="space-y-3">
+                                          <div>
+                                            <p className="text-xs text-gray-500 mb-1">Rating:</p>
+                                            {renderStarRating(task._id)}
+                                          </div>
+                                          
+                                          <div>
+                                            <p className="text-xs text-gray-500 mb-1">Feedback:</p>
+                                            <Textarea
+                                              placeholder="Add your feedback on this task..."
+                                              value={taskReviews[task._id] || ""}
+                                              onChange={(e) => handleReviewNotesChange(task._id, e.target.value)}
+                                              className="text-sm h-20"
+                                            />
+                                          </div>
+                                          
+                                          <Button 
+                                            size="sm"
+                                            onClick={() => handleReview(task._id)}
+                                            className="mt-2"
+                                          >
+                                            Submit Review
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <div className="space-y-2">
+                                          <div className="flex items-center">
+                                            <p className="text-xs text-gray-500 mr-2">Rating:</p>
+                                            <div className="flex">
+                                              {[...Array(task.rating || 1)].map((_, i) => (
+                                                <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                              ))}
+                                              {[...Array(5 - (task.rating || 1))].map((_, i) => (
+                                                <Star key={i} className="h-4 w-4 text-gray-300" />
+                                              ))}
+                                            </div>
+                                          </div>
+                                          {task.reviewNotes && (
+                                            <div>
+                                              <p className="text-xs text-gray-500">Feedback:</p>
+                                              <p className="text-sm mt-1 bg-gray-50 p-2 rounded">{task.reviewNotes}</p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                   
                                   {task.attachments?.length > 0 && (
                                     <div className="mt-2 pt-2 border-t">

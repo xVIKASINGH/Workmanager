@@ -18,6 +18,7 @@ export async function POST(request, { params }) {
             "teammates.$.assigntask": {
               task,
               dueDate,
+              createdAt:new Date
             },
           },
         },

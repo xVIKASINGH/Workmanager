@@ -50,6 +50,8 @@ const GroupProjectSchema = new Schema(
               default: "pending",
             },
             dueDate: Date,
+            completedAt:Date,
+            createdAt:Date,
             attachments: [ 
               {
                 filename: String,
@@ -60,7 +62,13 @@ const GroupProjectSchema = new Schema(
                 },
               },
             ],
+            qualityScore:{
+              rating:{type: Number,min:1,max:5},
+                reviewNotes:String,
+           
+            },
           },
+        
         ],
         comments: [
           {
@@ -81,11 +89,32 @@ const GroupProjectSchema = new Schema(
             ],
           },
         ],
+        taskCompletionStats: {
+          totalAssigned: { type: Number, default: 0 },
+          completed: { type: Number, default: 0 },
+          pending: { type: Number, default: 0 },
+          inProgress: { type: Number, default: 0 },
+          averageCompletionTime: { type: Number, default: 0 }, 
+          deadlinesMet: { type: Number, default: 0 },
+          totalCompletionTime:{type :Number,default:0}
+        },
+       
       },
     ],
   },
   { timestamps: true }
 );
+
+GroupProjectSchema.pre("save", function (next) {
+  this.teammates.forEach(teammate => {
+    teammate.assigntask.forEach(task => {
+      if (task.status === "completed" && !task.completedAt) {
+        task.completedAt = new Date();
+      }
+    });
+  });
+  next();
+});
 
 const Project =
   mongoose.models.Project || mongoose.model("Project", GroupProjectSchema);

@@ -15,6 +15,7 @@ import { Calendar, Clock, FileText, Plus, Trash2, Upload, Users, X } from "lucid
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
+
 export default function CreateProjectPage() {
   const router = useRouter()
 
@@ -110,9 +111,10 @@ export default function CreateProjectPage() {
       const data = await res.json()
       if (res.ok) {
         toast.success("Project created successfully")
-        router.push("/dashboard")
+        router.push("/myprojects")
       } else {
         toast.error(data.message || "Failed to create project")
+        
       }
     } catch (err) {
       toast.error("Something went wrong")
@@ -352,8 +354,7 @@ export default function CreateProjectPage() {
                                     size="icon"
                                     className="h-6 w-6 text-muted-foreground hover:text-destructive"
                                     onClick={() => {
-                                      // This is a mock implementation since we can't directly modify a FileList
-                                      // In a real app, you'd need to create a new FileList or use a different approach
+                                
                                       setFiles(null)
                                     }}
                                   >

@@ -14,7 +14,7 @@ export async function POST(request,{params}) {
       const teamMembers=JSON.parse(rawteamMembers);
       const files=formData?.get('files')
       if (!title || !description || !deadline || !teamMembers) {
-        return Response.json({ error: "Missing fields" }, { status: 400 });
+        return Response.json({ error: "Missing fields" }, { status: 403 });
       }
     
       try {

@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 import Project from "@/models/GroupProjectSchema";
-
+import { CalculateStats } from "@/helper/Calculatestats";
 
 
 export async function POST(request,{params}){
@@ -20,7 +20,7 @@ export async function POST(request,{params}){
               headers: { "Content-Type": "application/json" },
             });
           }
-          console.log("her is the body",taskId,newStatus)
+         
           if(mongoose.connection.readyState!==1){
             Dbconnect();
           }
@@ -32,6 +32,8 @@ export async function POST(request,{params}){
               headers: { "Content-Type": "application/json" },
             });
           }
+          
+        
       let taskfound=false;
       for(let teammate of project.teammates){
         const task=teammate?.assigntask.find((task)=>task._id.toString()===taskId)
@@ -39,7 +41,7 @@ export async function POST(request,{params}){
         if(task){
             taskfound=true
             task.status=newStatus
-            console.log("got the task upadting...",task)
+         
             break;
 
         }
@@ -47,6 +49,13 @@ export async function POST(request,{params}){
       if(!taskfound){
         return NextResponse.json({message:"error occurred"},{status:501})
       }
+      project.teammates = project.teammates.map(teammate => {
+        const stats = CalculateStats(teammate);
+        return {
+          ...teammate.toObject(),
+          taskCompletionStats: stats
+        };
+      });
       await project.save();
 
       return NextResponse.json({ message: "Task updated successfully" }, { status: 200 });
