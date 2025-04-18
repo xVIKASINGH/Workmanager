@@ -7,7 +7,8 @@ import {
   CategoryScale,
   LinearScale,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 } from "chart.js";
 
 ChartJS.register(
@@ -16,31 +17,37 @@ ChartJS.register(
   CategoryScale,
   LinearScale,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
-export default function TaskCompletionLineChart({ tasksData }) {
-  console.log("compoentns hit..")
-  console.log(tasksData)
-  // Process the data for the chart
-  const processData = () => {
+export default function TaskCompletionTimelineChart({ tasksData }) {
+  // Process data to better visualize completion trends
+  const processTimelineData = () => {
+    if (!tasksData || tasksData.length === 0) {
+      // Return empty placeholder data if no tasks available
+      return {
+        labels: ['No Data'],
+        datasets: []
+      };
+    }
+
     // Sort tasks by completion date
     const sortedTasks = [...tasksData].sort((a, b) => 
       new Date(a.completedAt) - new Date(b.completedAt)
     );
 
-    // Group tasks by username
-    const userTasksMap = {};
+    // Get unique usernames from tasks
+    const allUsernames = [...new Set(sortedTasks.map(task => task.username))];
     
-    sortedTasks.forEach(task => {
-      if (!userTasksMap[task.username]) {
-        userTasksMap[task.username] = [];
-      }
-      userTasksMap[task.username].push(task);
+    // Create a mapping of all completion dates
+    const allDates = sortedTasks.map(task => {
+      const date = new Date(task.completedAt);
+      return `${date.getMonth() + 1}/${date.getDate()}`;
     });
-
-    // Create datasets for each user
-    const datasets = [];
+    const uniqueDates = [...new Set(allDates)].sort();
+    
+    // Create datasets - one per user
     const colors = [
       '#3b82f6', // blue-500
       '#ef4444', // red-500
@@ -49,64 +56,94 @@ export default function TaskCompletionLineChart({ tasksData }) {
       '#8b5cf6', // violet-500
       '#ec4899', // pink-500
     ];
-
-    let colorIndex = 0;
-    for (const username in userTasksMap) {
-      const userData = userTasksMap[username];
+    
+    const datasets = [];
+    
+    allUsernames.forEach((username, userIndex) => {
+      // Filter tasks for this user and compute cumulative counts per date
+      const userTasks = sortedTasks.filter(task => task.username === username);
+      const userDatesMap = {};
       
-      datasets.push({
-        label: username,
-        data: userData.map(task => task.timeTaken),
-        borderColor: colors[colorIndex % colors.length],
-        backgroundColor: `${colors[colorIndex % colors.length]}22`,
-        tension: 0.4,
-        fill: true
+      // Initialize with zero for all dates
+      uniqueDates.forEach(date => {
+        userDatesMap[date] = 0;
       });
       
-      colorIndex++;
-    }
+      // Count tasks per date
+      userTasks.forEach(task => {
+        const date = new Date(task.completedAt);
+        const formattedDate = `${date.getMonth() + 1}/${date.getDate()}`;
+        userDatesMap[formattedDate] += 1;
+      });
+      
+      // Calculate cumulative sum
+      let cumulativeSum = 0;
+      const cumulativeData = uniqueDates.map(date => {
+        cumulativeSum += userDatesMap[date];
+        return cumulativeSum;
+      });
+      
+      // Create the dataset
+      datasets.push({
+        label: username,
+        data: cumulativeData,
+        borderColor: colors[userIndex % colors.length],
+        backgroundColor: `${colors[userIndex % colors.length]}20`,
+        borderWidth: 3,
+        pointBackgroundColor: colors[userIndex % colors.length],
+        pointBorderColor: 'white',
+        pointBorderWidth: 2,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        tension: 0.3,
+        fill: true
+      });
+    });
 
     return {
-      labels: sortedTasks.map(task => task.taskName),
+      labels: uniqueDates,
       datasets
     };
   };
 
-  const data = processData();
+  const data = processTimelineData();
+  
+  // If no data, show a message instead
+  if (data.datasets.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
+        <p className="text-gray-500">No completion data available to display</p>
+      </div>
+    );
+  }
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
+        labels: {
+          usePointStyle: true,
+          boxWidth: 10,
+          padding: 20
+        }
       },
       tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12,
+        titleFont: {
+          size: 14
+        },
+        bodyFont: {
+          size: 13
+        },
         callbacks: {
           title: function(context) {
-            const index = context[0].dataIndex;
-            const datasetIndex = context[0].datasetIndex;
-            const username = data.datasets[datasetIndex].label;
-            const taskName = data.labels[index];
-            return `${taskName} (${username})`;
+            return `Date: ${context[0].label}`;
           },
           label: function(context) {
-            return `Time taken: ${context.raw} ${context.raw === 1 ? 'day' : 'days'}`;
-          },
-          afterLabel: function(context) {
-            const datasetIndex = context.datasetIndex;
-            const index = context.dataIndex;
-            const username = data.datasets[datasetIndex].label;
-            
-            // Find the task with this username and task name
-            const task = tasksData.find(t => 
-              t.username === username && 
-              t.taskName === data.labels[index]
-            );
-            
-            if (task && task.completedAt) {
-              return `Completed: ${new Date(task.completedAt).toLocaleDateString()}`;
-            }
-            return '';
+            return `${context.dataset.label}: ${context.raw} tasks completed`;
           }
         }
       }
@@ -116,17 +153,50 @@ export default function TaskCompletionLineChart({ tasksData }) {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Time Taken (days)'
+          text: 'Tasks Completed',
+          padding: {top: 0, bottom: 10}
+        },
+        ticks: {
+          precision: 0, // Show only whole numbers
+          stepSize: 1
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
         }
       },
       x: {
         title: {
           display: true,
-          text: 'Tasks'
+          text: 'Date (Month/Day)',
+          padding: {top: 10, bottom: 0}
+        },
+        grid: {
+          display: false
         }
       }
     },
+    elements: {
+      point: {
+        radius: 6, // Make points more visible
+        hoverRadius: 8
+      },
+      line: {
+        tension: 0.3 // Smoother curves
+      }
+    },
+    interaction: {
+      intersect: false,
+      mode: 'index'
+    },
+    animation: {
+      duration: 1000,
+      easing: 'easeOutQuart'
+    }
   };
 
-  return <Line data={data} options={options} />;
+  return (
+    <div className="h-full w-full min-h-64">
+      <Line data={data} options={options} />
+    </div>
+  );
 }
