@@ -26,7 +26,8 @@ import {
   Trash2,
   X,
   Star,
-  StarIcon
+  StarIcon,
+  ChartColumnDecreasing
 } from "lucide-react";
 import {
   Dialog,
@@ -342,12 +343,23 @@ const ProjectDetailsPage = () => {
     <div className="container mx-auto py-6 max-w-7xl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Project Dashboard</h1>
+        <Button 
+  variant="default" 
+   
+  onClick={() => router.push(`/project/performancestats/${id}`)}
+  
+>
+<ChartColumnDecreasing /> Quick Analysis
+</Button>
+
+       
         
         {isCreator && (
           <div className="flex gap-2">
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
+                  
                   <Plus className="h-4 w-4" /> 
                   Assign Task
                 </Button>

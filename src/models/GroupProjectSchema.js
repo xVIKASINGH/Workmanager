@@ -20,9 +20,8 @@ const GroupProjectSchema = new Schema(
       required: true,
     },
     progress: {
-      type: String,
-      enum: ["0", "25", "50", "75", "100"],
-      default: "0",
+      type: Number,
+      default: 0,
     },
     attachments: [ // attachments as a whole
       {
@@ -110,6 +109,7 @@ GroupProjectSchema.pre("save", function (next) {
     teammate.assigntask.forEach(task => {
       if (task.status === "completed" && !task.completedAt) {
         task.completedAt = new Date();
+       
       }
     });
   });

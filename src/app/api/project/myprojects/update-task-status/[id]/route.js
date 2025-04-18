@@ -33,11 +33,11 @@ export async function POST(request,{params}){
             });
           }
           
-        
+      
       let taskfound=false;
       for(let teammate of project.teammates){
         const task=teammate?.assigntask.find((task)=>task._id.toString()===taskId)
-
+        
         if(task){
             taskfound=true
             task.status=newStatus
@@ -49,6 +49,7 @@ export async function POST(request,{params}){
       if(!taskfound){
         return NextResponse.json({message:"error occurred"},{status:501})
       }
+      
       project.teammates = project.teammates.map(teammate => {
         const stats = CalculateStats(teammate);
         return {
@@ -56,6 +57,20 @@ export async function POST(request,{params}){
           taskCompletionStats: stats
         };
       });
+      
+
+      
+      let completetask = project.teammates.reduce((acc, tm) => acc + tm.taskCompletionStats.completed, 0);
+
+let totalAssigned=0
+  for(let teammate of project.teammates){
+     teammate.assigntask.forEach(element => {
+      totalAssigned++;
+     });
+  }
+  const progress = totalAssigned > 0 ? (completetask / totalAssigned) * 100 : 0;
+
+ project.progress=progress;
       await project.save();
 
       return NextResponse.json({ message: "Task updated successfully" }, { status: 200 });
