@@ -1,10 +1,10 @@
 import { Dbconnect } from "@/helper/dbConnect";
 import Project from "@/models/GroupProjectSchema";
 import { NextResponse } from "next/server";
-
+import { CalculateStats } from "@/helper/Calculatestats";
 export async function POST(request, { params }) {
   const { id } =await params; 
-  console.log("API hit for assign-task, project ID:", id);
+
 
   const data = await request.json();
   console.log("Received Data:", data);
@@ -24,12 +24,35 @@ export async function POST(request, { params }) {
         },
         { new: true }
       );
+      
       if (!updatedProject) {
         return NextResponse.json(
           { message: "Project or teammate not found" },
           { status: 404 }
         );
       }
+       updatedProject.teammates = updatedProject.teammates.map(teammate => {
+              const stats = CalculateStats(teammate);
+              return {
+                ...teammate.toObject(),
+                taskCompletionStats: stats
+              };
+            });
+            
+      
+            
+            let completetask = updatedProject.teammates.reduce((acc, tm) => acc + tm.taskCompletionStats.completed, 0);
+      
+      let totalAssigned=0
+        for(let teammate of updatedProject.teammates){
+           teammate.assigntask.forEach(element => {
+            totalAssigned++;
+           });
+        }
+        const progress = totalAssigned > 0 ? (completetask / totalAssigned) * 100 : 0;
+      
+       updatedProject.progress=progress;
+       await updatedProject.save();
       return NextResponse.json(
         { message: "Task assigned successfully", project: updatedProject },
         { status: 200 }

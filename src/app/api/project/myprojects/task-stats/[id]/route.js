@@ -8,7 +8,7 @@ export  async function GET(request,{params}) {
     await Dbconnect();
     const {id}=await params
     const project = await Project.findById(id).populate("teammates.userId");
-   console.log(project)
+   
    const deadline=project.deadline;
    const progress=project.progress;
     const labels = project.teammates.map((tm) => tm.userId.username);
@@ -16,6 +16,11 @@ export  async function GET(request,{params}) {
     const pending = project.teammates.map((tm) => tm.taskCompletionStats.pending);
     const inProgress = project.teammates.map((tm) => tm.taskCompletionStats.inProgress);
     const averagetime=project.teammates.map((tm)=>tm.taskCompletionStats.averageCompletionTime)
+
+    let feedbacks=[];
+    for(let teammate of project.teammates){
+  feedbacks.push({feedback:teammate.feedback,username:teammate.userId.username})
+    }
     
     const alltaskinfo=[]
     for (let teammate of project.teammates) {
@@ -33,8 +38,8 @@ export  async function GET(request,{params}) {
       });
     }
     
-  console.log("here is status",labels, completed, pending, inProgress,deadline,progress,averagetime,alltaskinfo)
-   return  NextResponse.json({ labels, completed, pending, inProgress,deadline,progress,averagetime,alltaskinfo,});
+ 
+   return  NextResponse.json({ labels, completed, pending, inProgress,deadline,progress,averagetime,alltaskinfo,feedbacks});
   } catch (error) {
     console.log("error occurred :",error)
   }

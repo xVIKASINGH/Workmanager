@@ -8,7 +8,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, CheckCircle, AlertCircle, TrendingUp, Calendar, User } from "lucide-react";
+import { Clock, CheckCircle, AlertCircle, TrendingUp, Calendar, User, MessageSquare, Loader2 } from "lucide-react";
+import { GoogleGenAI } from "@google/genai";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner"
 
 export default function ProjectDashboard() {
   const { id } = useParams();
@@ -16,14 +20,126 @@ export default function ProjectDashboard() {
   const [lineChartData, setLineChartData] = useState([]);
   const [projectStats, setProjectStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [feedbacks, setFeedbacks] = useState({});
+  const [generatingFeedback, setGeneratingFeedback] = useState({});
+  const [fetchfeedbacks,setfetchFeedbacks]=useState([])
+  const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_API_KEY });
 
+  const generateAIFeedback = async (member) => {
+    try {
+      setGeneratingFeedback(prev => ({ ...prev, [member.username]: true }));
+  
+      if (!process.env.NEXT_PUBLIC_API_KEY) {
+        throw new Error("API key is missing");
+      }
+  
+      const response = await ai.models.generateContentStream({
+        model: "gemini-2.0-flash",
+        contents: `You are a project manager writing a performance review directly addressed to the teammate below. Keep it concise and suitable to display in a UI card. Avoid generic commentary or mentioning UI format. Here's the teammate's data:
+
+Name: ${member.username}
+
+Completed Tasks: ${member.completed}
+
+Pending Tasks: ${member.pending}
+
+In-Progress Tasks: ${member.inProgress}
+
+Average Time per Task: ${member.averageTime?.toFixed(1) || 'N/A'} days
+(Note: If average time is 0, it means the task was completed immediately for testing purposes—consider this as good work.)
+
+Now write a performance summary with constructive feedback and suggestions for improvement (if needed). Speak directly to ${member.username}.
+`,
+      });
+      
+      
+      let fullResponse = "";
+      for await (const chunk of response) {
+  
+        fullResponse += chunk.text || "";
+      }
+      
+    
+      setFeedbacks(prev => ({ 
+        ...prev, 
+        [member.username]: String(fullResponse) 
+      }));
+      
+      toast("AI Review Generated",{
+        
+        description: "Review has been generated successfully. You can edit it before sending."
+      });
+      
+    } catch (error) {
+      console.error("Error generating AI feedback:", error);
+      toast("error",{
+        description: "Failed to generate AI feedback. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingFeedback(prev => ({ ...prev, [member.username]: false }));
+    }
+  };
+
+
+  const handleFeedbackChange = (username, value) => {
+    setFeedbacks(prev => ({
+      ...prev,
+      [username]: value
+    }));
+  };
+
+
+  const sendFeedback = async (username) => {
+    try {
+    
+      await fetch(`/api/project/myprojects/feedback/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          username, 
+          feedback: feedbacks[username],
+          projectId: id
+        })
+      });
+      
+     
+      const newFeedback = {
+        username: username,
+        feedback: feedbacks[username],
+        createdAt: new Date().toISOString()
+      };
+      
+      setfetchFeedbacks(prev => [...prev, newFeedback]);
+    
+      setFeedbacks(prev => ({
+        ...prev,
+        [username]: ''
+      }));
+      
+      toast("Feedback Sent", {
+        description: `Your feedback for ${username} has been sent successfully.`,
+      });
+      
+    } catch (error) {
+      console.error("Error sending feedback:", error);
+      toast("error", {
+        description: "Failed to send feedback. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
   useEffect(() => {
     async function fetchStats() {
       try {
         setIsLoading(true);
         const res = await fetch(`/api/project/myprojects/task-stats/${id}`);
         const data = await res.json();
-        console.log(data)
+       
+        if (data.feedbacks) {
+          setfetchFeedbacks(data.feedbacks);
+        }
+
         let lineData = [];
         for (let task of data.alltaskinfo) {
           if (task.status === 'completed') {
@@ -219,7 +335,7 @@ export default function ProjectDashboard() {
             
             <TabsContent value="team" className="mt-0">
               {projectStats && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {projectStats.teammateStats.map((member, index) => (
                     <div key={index} className="p-4 border rounded-lg">
                       <div className="flex items-center gap-2 mb-3">
@@ -227,7 +343,7 @@ export default function ProjectDashboard() {
                         <span className="font-medium">{member.username}</span>
                       </div>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
                         <div>
                           <p className="text-muted-foreground">Completed</p>
                           <p className="font-medium">{member.completed}</p>
@@ -244,6 +360,65 @@ export default function ProjectDashboard() {
                           <p className="text-muted-foreground">Avg. Time (days)</p>
                           <p className="font-medium">{member.averageTime?.toFixed(1) || 'N/A'}</p>
                         </div>
+                      </div>
+                      {fetchfeedbacks.filter(fb => fb.username === member.username).length > 0 && (
+  <div className="mb-3 space-y-2">
+    <p className="text-sm font-medium text-gray-700">Previous Feedback:</p>
+    {fetchfeedbacks
+      .filter(fb => fb.username === member.username)
+      .map((feedback, idx) => (
+        <div key={idx} className="p-3 bg-blue-50 rounded-md text-sm">
+          <p className="text-gray-800">{feedback.feedback}</p>
+          <p className="text-xs text-gray-500 mt-1">
+            {new Date(feedback.createdAt).toLocaleDateString()} 
+          </p>
+        </div>
+      ))
+    }
+  </div>
+)}
+                 
+                      <div className="mt-4 border-t pt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-blue-500" />
+                            <span className="font-medium">Performance Feedback</span>
+                          </div>
+                          <div className="flex gap-2">
+                          <Button
+  variant="outline"
+  size="sm"
+  onClick={() => generateAIFeedback(member)}
+  disabled={generatingFeedback[member.username]}
+  className="relative overflow-hidden bg-gradient-to-r from-blue-500 to-purple-600 hover:from-purple-500 hover:to-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-300 border-none"
+>
+  {generatingFeedback[member.username] ? (
+    <>
+      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+      Generating...
+    </>
+  ) : (
+    <>
+      <span className="relative z-10">Generate AI Review</span>
+      <span className="absolute inset-0 bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400 opacity-0 hover:opacity-20 transition-opacity duration-300"></span>
+    </>
+  )}
+</Button>
+                            <Button 
+                              size="sm"
+                              onClick={() => sendFeedback(member.username)}
+                              disabled={!feedbacks[member.username]}
+                            >
+                              Send Feedback
+                            </Button>
+                          </div>
+                        </div>
+                        <Textarea
+                          placeholder="Enter feedback for this team member or generate AI review..."
+                          className="min-h-24"
+                          value={feedbacks[member.username] || ''}
+                          onChange={(e) => handleFeedbackChange(member.username, e.target.value)}
+                        />
                       </div>
                     </div>
                   ))}

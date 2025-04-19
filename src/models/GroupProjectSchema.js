@@ -40,6 +40,7 @@ const GroupProjectSchema = new Schema(
           ref: "User",
           required: true,
         },
+        feedback:String,
         assigntask: [
           {
             task: String,
@@ -51,6 +52,7 @@ const GroupProjectSchema = new Schema(
             dueDate: Date,
             completedAt:Date,
             createdAt:Date,
+            
             attachments: [ 
               {
                 filename: String,
