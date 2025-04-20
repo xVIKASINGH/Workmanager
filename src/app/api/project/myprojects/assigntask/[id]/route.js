@@ -7,11 +7,18 @@ export async function POST(request, { params }) {
 
 
   const data = await request.json();
-  console.log("Received Data:", data);
+
   const {teammateId,task,dueDate}=data;
 
+
   try {
-    await Dbconnect();    const updatedProject = await Project.findOneAndUpdate(
+  
+    await Dbconnect();    
+    
+    if(!teammateId || !task || !dueDate){
+      return NextResponse.json({message:"Please fill al details"});
+    }
+    const updatedProject = await Project.findOneAndUpdate(
         { _id: id, "teammates.userId": teammateId },
         {
           $push: {

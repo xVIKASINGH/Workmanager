@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useRef } from "react";
-
+import { toast } from 'sonner';
 import { 
   Calendar, 
   Clock, 
@@ -84,7 +84,7 @@ const ProjectDetailsPage = () => {
         setLoading(true);
         const res = await fetch(`/api/project/myprojects/project/${id}`); 
         const data = await res.json();
-      console.log("here is your data",data)
+
         if (res.ok) {
           setProject(data.project);
           console.log(data.project);
@@ -172,9 +172,14 @@ const ProjectDetailsPage = () => {
           dueDate: "",
         });
       } else {
-        throw new Error(data.message || "Failed to assign task");
+        throw new Error("error occurred")
+      
+      
       }
     } catch (error) {
+      toast("Error occurreed",{
+        description:`${error}`
+      })
       console.error("Error assigning task:", error);
     }
   };
