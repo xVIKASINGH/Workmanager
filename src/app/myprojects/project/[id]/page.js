@@ -84,7 +84,7 @@ const ProjectDetailsPage = () => {
         setLoading(true);
         const res = await fetch(`/api/project/myprojects/project/${id}`); 
         const data = await res.json();
-
+      console.log("here is your data",data)
         if (res.ok) {
           setProject(data.project);
           console.log(data.project);
@@ -100,14 +100,24 @@ const ProjectDetailsPage = () => {
           data.project.teammates?.forEach(teammate => {
             teammate.assigntask?.forEach(task => {
               if (task._id) {
-                ratings[task._id] = task.rating || 1;
-                reviews[task._id] = task.reviewNotes || "";
+             
+                if (task.qualityScore) {
+                  console.log(task.qualityScore.rating, "and here is", task.qualityScore.reviewNotes);
+                  ratings[task._id] = task.qualityScore.rating || 1;
+                  reviews[task._id] = task.qualityScore.reviewNotes || "";
+                } else {
+                 
+                  ratings[task._id] = 1;
+                  reviews[task._id] = "";
+                }
               }
             });
           });
           
           setTaskRatings(ratings);
           setTaskReviews(reviews);
+         
+          
         }
       } catch (error) {
         console.error("Failed to fetch project:", error);
@@ -169,8 +179,9 @@ const ProjectDetailsPage = () => {
     }
   };
 
+
   const handleDeleteProject = async () => {
-    console.log(id);
+    
     try {
       const response = await fetch(`/api/project/myprojects/delete/${id}`, {
         method: "DELETE",
@@ -192,7 +203,7 @@ const ProjectDetailsPage = () => {
     try {
       const rating = taskRatings[taskId] || 1;
       const reviewNotes = taskReviews[taskId] || "";
-      
+  
       const response = await fetch(`/api/project/myprojects/review-task/${id}`, {
         method: "POST",
         headers: {
@@ -200,29 +211,19 @@ const ProjectDetailsPage = () => {
         },
         body: JSON.stringify({ taskId, rating, reviewNotes }),
       });
-      
+  
       const data = await response.json();
-      
+  
       if (response.ok) {
-      
-        const updatedProject = { ...project };
-       
-        let taskFound = false;
-        
-        updatedProject.teammates.forEach(teammate => {
-          teammate.assigntask?.forEach(task => {
-            if (task._id === taskId) {
-              task.rating = rating;
-              task.reviewNotes = reviewNotes;
-              task.reviewed = true;
-              taskFound = true;
-            }
-          });
-        });
-        
-        if (taskFound) {
-          setProject(updatedProject);
+ 
+        const updatedProjectRes = await fetch(`/api/project/myprojects/project/${id}`);
+        const updatedProjectData = await updatedProjectRes.json();
+  
+        if (updatedProjectRes.ok) {
+          setProject(updatedProjectData.project); 
           alert("Review submitted successfully!");
+        } else {
+          throw new Error("Review submitted but failed to refresh project");
         }
       } else {
         throw new Error(data.message || "Failed to submit review");
@@ -232,6 +233,8 @@ const ProjectDetailsPage = () => {
       alert("Failed to submit review. Please try again.");
     }
   };
+  
+  
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -624,57 +627,62 @@ const ProjectDetailsPage = () => {
                                   
                                  
                                   {task.status === 'completed' && isCreator && (
-                                    <div className="mt-3 pt-3 border-t">
-                                      <h5 className="text-sm font-medium mb-2">Review Task</h5>
-                                    
-                                      {!task.reviewed ? (
-                                        <div className="space-y-3">
-                                          <div>
-                                            <p className="text-xs text-gray-500 mb-1">Rating:</p>
-                                            {renderStarRating(task._id)}
-                                          </div>
-                                          
-                                          <div>
-                                            <p className="text-xs text-gray-500 mb-1">Feedback:</p>
-                                            <Textarea
-                                              placeholder="Add your feedback on this task..."
-                                              value={taskReviews[task._id] || ""}
-                                              onChange={(e) => handleReviewNotesChange(task._id, e.target.value)}
-                                              className="text-sm h-20"
-                                            />
-                                          </div>
-                                          
-                                          <Button 
-                                            size="sm"
-                                            onClick={() => handleReview(task._id)}
-                                            className="mt-2"
-                                          >
-                                            Submit Review
-                                          </Button>
-                                        </div>
-                                      ) : (
-                                        <div className="space-y-2">
-                                          <div className="flex items-center">
-                                            <p className="text-xs text-gray-500 mr-2">Rating:</p>
-                                            <div className="flex">
-                                              {[...Array(task.rating || 1)].map((_, i) => (
-                                                <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                              ))}
-                                              {[...Array(5 - (task.rating || 1))].map((_, i) => (
-                                                <Star key={i} className="h-4 w-4 text-gray-300" />
-                                              ))}
-                                            </div>
-                                          </div>
-                                          {task.reviewNotes && (
-                                            <div>
-                                              <p className="text-xs text-gray-500">Feedback:</p>
-                                              <p className="text-sm mt-1 bg-gray-50 p-2 rounded">{task.reviewNotes}</p>
-                                            </div>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
+  <div className="mt-3 pt-3 border-t">
+    <h5 className="text-sm font-medium mb-2">Review Task</h5>
+
+    {task.qualityScore && task.qualityScore.rating ? (
+     
+      <div className="space-y-2">
+        <div className="flex items-center">
+          <p className="text-xs text-gray-500 mr-2">Rating:</p>
+          <div className="flex">
+            {[...Array(task.qualityScore.rating)].map((_, i) => (
+              <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            ))}
+            {[...Array(5 - task.qualityScore.rating)].map((_, i) => (
+              <Star key={i} className="h-4 w-4 text-gray-300" />
+            ))}
+          </div>
+        </div>
+        {task.qualityScore.reviewNotes && (
+          <div>
+            <p className="text-xs text-gray-500">Feedback:</p>
+            <p className="text-sm mt-1 bg-gray-50 p-2 rounded">
+              {task.qualityScore.reviewNotes}
+            </p>
+          </div>
+        )}
+      </div>
+    ) : (
+     
+      <div className="space-y-3">
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Rating:</p>
+          {renderStarRating(task._id)}
+        </div>
+
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Feedback:</p>
+          <Textarea
+            placeholder="Add your feedback on this task..."
+            value={taskReviews[task._id] || ""}
+            onChange={(e) => handleReviewNotesChange(task._id, e.target.value)}
+            className="text-sm h-20"
+          />
+        </div>
+
+        <Button 
+          size="sm"
+          onClick={() => handleReview(task._id)}
+          className="mt-2"
+        >
+          Submit Review
+        </Button>
+      </div>
+    )}
+  </div>
+)}
+
                                   
                                   {task.attachments?.length > 0 && (
                                     <div className="mt-2 pt-2 border-t">
