@@ -527,21 +527,33 @@ const ProjectDetailsPage = () => {
                 </div>
                 
                 {project.attachments?.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
-                      <PaperclipIcon className="h-4 w-4" />
-                      Attachments ({project.attachments.length})
-                    </h3>
-                    <div className="space-y-2">
-                      {project.attachments.map((file, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded text-sm">
-                          <FileText className="h-4 w-4 text-gray-500" />
-                          <span>{file.filename}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+  <div className="mt-4">
+    <h3 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+      <PaperclipIcon className="h-4 w-4" />
+      Attachments ({project.attachments.length})
+    </h3>
+    <div className="space-y-2">
+      {project.attachments.map((file, index) => (
+        <div
+          key={index}
+          className="flex items-center gap-2 p-2 bg-gray-50 rounded text-sm"
+        >
+          <FileText className="h-4 w-4 text-gray-500" />
+          <a
+            href={file.fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+            download={false}
+          >
+            {file.filename || "Open File"}
+          </a>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
               </div>
             </CardContent>
           </Card>

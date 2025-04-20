@@ -4,21 +4,54 @@ import Project from "@/models/GroupProjectSchema";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
+import { Readable } from "stream";
+import cloudinary from "@/utils/cloudinary"
+
 export async function POST(request,{params}) {
     const server=await getServerSession(authOptions);
       const formData=await request.formData();
+      console.log(formData)
       const title=formData.get("title");
       const description=formData.get('description');
       const deadline=formData.get("deadline")
       const rawteamMembers = formData.getAll("teamMembers");
       const teamMembers=JSON.parse(rawteamMembers);
-      const files=formData?.get('files')
+      const files=formData?.get('attachments')
+      console.log("files details",files.name)
       if (!title || !description || !deadline || !teamMembers) {
         return Response.json({ error: "Missing fields" }, { status: 403 });
       }
     
       try {
         await Dbconnect();
+        if (!files || typeof files.arrayBuffer !== "function") {
+          return NextResponse.json(
+            { error: "File is missing or invalid" },
+            { status: 400 }
+          );
+        }
+        
+        const buffer = Buffer.from(await files.arrayBuffer());
+        const fileurl=await new Promise((resolve,reject)=>{
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: "workmanager",
+              
+             },
+            (error, result) => {
+              if (error) {
+            
+                reject(error)}
+              else{
+                  resolve(result.secure_url);
+              }
+             
+            }
+           
+          );
+         
+          Readable.from(buffer).pipe(uploadStream);
+        })
+       console.log("here is the link of file",fileurl)
         const teammates = teamMembers.map((user) => ({
           userId:user._id,                 
           assigntask: [],
@@ -30,8 +63,12 @@ export async function POST(request,{params}) {
         description,
         deadline,
         teammates,
-        files
-      })
+        attachments:{ 
+          filename:files.name,
+          fileUrl:fileurl,
+          uploadAt:Date.now
+        }
+      })  
     console.log(formData)
     await newproject.save();
     return NextResponse.json({message:"project created"},{status:201})
