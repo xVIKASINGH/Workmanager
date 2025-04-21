@@ -8,7 +8,7 @@ export async function GET(request,{params}) {
  
     const session=await getServerSession(authOptions)
     const {id}=await params
-    console.log("api hit with id",id)
+    
     try {
         await Dbconnect();
         const project=await Project.findById(id).populate([

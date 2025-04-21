@@ -8,7 +8,7 @@ import { authOptions } from "@/lib/authOptions";
 
 export async function GET(request,{params}) {
     const {username}=await params;
-    console.log(username)
+   
   const session=await getServerSession(authOptions);
     await Dbconnect();
     try {
@@ -36,7 +36,7 @@ export async function GET(request,{params}) {
               isConnected,
             };
           });
-           console.log(result)
+          
        
         return NextResponse.json({result},{status:201})
     } catch (error) {

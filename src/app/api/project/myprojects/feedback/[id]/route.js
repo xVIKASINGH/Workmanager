@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 
 export async function POST(request,{params}) {
-    console.log("api hit huiii hai")
+
     const {feedback,projectId,username}=await request.json()
     const {id}=await params;
 try {

@@ -19,7 +19,7 @@ await Dbconnect();
     return NextResponse.json({ message: "All fields are required" }, { status: 400 });
   }
  
-console.log("here is your id",session.user.id)
+
   try {
     const newTask = await Task.create({
       title,

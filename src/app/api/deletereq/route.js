@@ -9,7 +9,7 @@ export async function POST(request,{params}) {
     
  
     const {reqId}=await request.json();
- console.log("connecton id",reqId)
+ 
     try {
       await Dbconnect();
       const collabobject=await Collab.findById(reqId);

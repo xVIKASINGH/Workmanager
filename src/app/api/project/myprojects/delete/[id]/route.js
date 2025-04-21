@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 export async function DELETE(request,{params}) {
 
     const {id}=await params
-        console.log("api hit here i sthe id to delte project",id)
+        
     try {
         await Dbconnect();
         const project=await Project.findByIdAndDelete(id);

@@ -8,9 +8,9 @@ import { authOptions } from "@/lib/authOptions";
 
 export async function GET(request,{params}){
   const session= await getServerSession(authOptions);
-  console.log("api hit",session?.user?.id)
+  
   const id=session.user.id;
-  console.log("here is id",id)
+ 
   try {
     await Dbconnect();
     const connectionrequest = await Collab.find({
@@ -20,7 +20,7 @@ export async function GET(request,{params}){
       ],
     }).populate("sender", "username name").populate("reciever", "username name");
     
-  console.log("all requests",connectionrequest)
+
     if(!connectionrequest){
       return NextResponse.json({message:"No request found"},{status:201})
 

@@ -11,17 +11,18 @@ export async function GET(request){
     await Dbconnect();
   
     const session=await getServerSession(authOptions);
-    console.log("Sessio info",session)
+    if(!session.user || !session.user.id){
+      return NextResponse.json({message:"Unauthorized"},{status:401})
+   }
+    
     const alltask=await Task.find({
      user:session.user.id
     })
   
 
-     if(!session.user || !session.user.id){
-        return NextResponse.json({message:"Unauthorized"},{status:401})
-     }
-      // send resposne
-    console.log(alltask)
+   
+  
+  
     return NextResponse.json(alltask,{status:201});
   
    

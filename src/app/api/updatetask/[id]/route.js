@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { Dbconnect } from "@/helper/dbConnect";
 
 export async function PUT(request,{params}) {
-    console.log("API HIT")
+  
     const {id}=await params;
 try {
     await Dbconnect();

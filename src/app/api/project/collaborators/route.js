@@ -18,7 +18,7 @@ try {
         return NextResponse.json({ message: "No collaborators found" }, { status: 404 });
       }
   
-      console.log("Collaborators found:", user.collaborators);
+    
     return NextResponse.json({collaborators:user.collaborators},{status:201})
 } catch (error) {
     console.log("error while fetching error",error);

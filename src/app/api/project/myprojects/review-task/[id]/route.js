@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 export async function POST(request,{params}) {
     const {id}=await params;
     const {taskId,rating,reviewNotes}=await request.json();
-    console.log(taskId,rating,reviewNotes)
+
     try {
         const project=await Project.findById(id)
         if(!project){
@@ -20,7 +20,7 @@ export async function POST(request,{params}) {
                 rating:rating,
                 reviewNotes:reviewNotes
             }
-            console.log(task)
+    
             taskfound=true
             break;
         }

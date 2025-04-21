@@ -10,14 +10,14 @@ import cloudinary from "@/utils/cloudinary"
 export async function POST(request,{params}) {
     const server=await getServerSession(authOptions);
       const formData=await request.formData();
-      console.log(formData)
+    
       const title=formData.get("title");
       const description=formData.get('description');
       const deadline=formData.get("deadline")
       const rawteamMembers = formData.getAll("teamMembers");
       const teamMembers=JSON.parse(rawteamMembers);
       const files=formData?.get('attachments')
-      console.log("files details",files.name)
+     
       if (!title || !description || !deadline || !teamMembers) {
         return Response.json({ error: "Missing fields" }, { status: 403 });
       }
@@ -51,7 +51,7 @@ export async function POST(request,{params}) {
          
           Readable.from(buffer).pipe(uploadStream);
         })
-       console.log("here is the link of file",fileurl)
+     
         const teammates = teamMembers.map((user) => ({
           userId:user._id,                 
           assigntask: [],
@@ -69,7 +69,7 @@ export async function POST(request,{params}) {
           uploadAt:Date.now
         }
       })  
-    console.log(formData)
+    
     await newproject.save();
     return NextResponse.json({message:"project created"},{status:201})
 

@@ -25,6 +25,7 @@ export async function POST(req) {
 
     return NextResponse.json({ message: "User registered" }, { status: 201 });
   } catch (error) {
+    console.log("error ",error)
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
