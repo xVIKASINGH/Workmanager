@@ -22,39 +22,38 @@ ChartJS.register(
 );
 
 export default function TaskCompletionTimelineChart({ tasksData }) {
-  // Process data to better visualize completion trends
+
   const processTimelineData = () => {
     if (!tasksData || tasksData.length === 0) {
-      // Return empty placeholder data if no tasks available
+      
       return {
         labels: ['No Data'],
         datasets: []
       };
     }
 
-    // Sort tasks by completion date
     const sortedTasks = [...tasksData].sort((a, b) => 
       new Date(a.completedAt) - new Date(b.completedAt)
     );
 
-    // Get unique usernames from tasks
+
     const allUsernames = [...new Set(sortedTasks.map(task => task.username))];
     
-    // Create a mapping of all completion dates
+ 
     const allDates = sortedTasks.map(task => {
       const date = new Date(task.completedAt);
       return `${date.getMonth() + 1}/${date.getDate()}`;
     });
     const uniqueDates = [...new Set(allDates)].sort();
     
-    // Create datasets - one per user
+
     const colors = [
-      '#3b82f6', // blue-500
-      '#ef4444', // red-500
-      '#10b981', // emerald-500
-      '#f59e0b', // amber-500
-      '#8b5cf6', // violet-500
-      '#ec4899', // pink-500
+      '#3b82f6', 
+      '#ef4444',  
+      '#10b981', 
+      '#f59e0b',
+      '#8b5cf6',
+      '#ec4899', 
     ];
     
     const datasets = [];

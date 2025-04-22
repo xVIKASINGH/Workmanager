@@ -226,7 +226,7 @@ const ProjectDetailsPage = () => {
   
         if (updatedProjectRes.ok) {
           setProject(updatedProjectData.project); 
-          alert("Review submitted successfully!");
+         toast("Review added successfully")
         } else {
           throw new Error("Review submitted but failed to refresh project");
         }
@@ -235,7 +235,7 @@ const ProjectDetailsPage = () => {
       }
     } catch (error) {
       console.error("Error submitting review:", error);
-      alert("Failed to submit review. Please try again.");
+      toast.error( data.message ||"failed try again later..")
     }
   };
   
@@ -732,18 +732,20 @@ const ProjectDetailsPage = () => {
                                     {formatDate(comment.timestamp)}
                                   </div>
                                   
-                                  {comment.attachments?.length > 0 && (
-                                    <div className="mt-2 pt-2 border-t">
-                                      <div className="flex flex-wrap gap-2">
-                                        {comment.attachments.map((file, fileIndex) => (
-                                          <Badge key={fileIndex} variant="outline" className="text-xs flex items-center gap-1">
+                                 {comment.attachments.map((file, fileIndex) => (
+                                        <a
+                                          key={fileIndex}
+                                          href={file.fileUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="no-underline"
+                                        >
+                                          <Badge variant="outline" className="text-xs flex items-center gap-1 cursor-pointer">
                                             <PaperclipIcon className="h-3 w-3" />
                                             {file.filename}
                                           </Badge>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
+                                        </a>
+                                      ))}
                                 </div>
                               ))}
                             </div>

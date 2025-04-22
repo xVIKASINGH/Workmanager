@@ -40,7 +40,10 @@ const GroupProjectSchema = new Schema(
           ref: "User",
           required: true,
         },
-        feedback:String,
+        feedback:{
+          content:String,
+          createdAt:Date
+        },
         assigntask: [
           {
             task: String,

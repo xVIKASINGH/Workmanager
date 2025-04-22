@@ -31,7 +31,7 @@ export  async function GET(request,{params}) {
           status: task.status,
           completedAt: task.completedAt,
           createdAt:task.createdAt,
-          duedate:task.dueDate, 
+          duedate:task.dueDate,   
           rating: task?.qualityScore?.rating || null,
           reviewNotes: task?.qualityScore?.reviewNotes || null,
         });

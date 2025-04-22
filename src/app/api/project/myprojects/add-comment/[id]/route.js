@@ -4,8 +4,13 @@ import Project from "@/models/GroupProjectSchema";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import mongoose from "mongoose";
-export async function POST(req,{params}) {
+import { Readable } from "stream";
+import cloudinary from "@/utils/cloudinary"
+export async function POST(request,{params}) {
   const {id}=await params
+  const formData=await request.formData();
+  const file=formData?.get('attachments');
+  const content=formData.get("content");
     try {
   
         const session = await getServerSession(authOptions);
@@ -17,12 +22,10 @@ export async function POST(req,{params}) {
         }
     
      
-        const body = await req.json();
-        const { content, attachments = [] } = body;
-        
+        console.log("here is attachments fetch from page",formData.attachments)
  
         if (!content) {
-          return new NextResponse(JSON.stringify({ error: "Project ID and comment content are required" }), {
+          return new NextResponse(JSON.stringify({ error: "comment content are required" }), {
             status: 400,
             headers: { "Content-Type": "application/json" },
           });
@@ -56,17 +59,38 @@ export async function POST(req,{params}) {
             headers: { "Content-Type": "application/json" },
           });
         }
+        const buffer = Buffer.from(await file.arrayBuffer());
+                const fileurl=await new Promise((resolve,reject)=>{
+                  const uploadStream = cloudinary.uploader.upload_stream(
+                    { folder: "workmanager",
+                      
+                     },
+                    (error, result) => {
+                      if (error) {
+                    
+                        reject(error)}
+                      else{
+                          resolve(result.secure_url);
+                      }
+                     
+                    }
+                   
+                  );
+                 
+                  Readable.from(buffer).pipe(uploadStream);
+                })
     
      
         const newComment = {
           content,
           timestamp: new Date(),
-          attachments: attachments.map(attachment => ({
-            filename: attachment.filename,
-            fileUrl: attachment.fileUrl,
-            uploadedAt: new Date()
-          }))
-        };
+          attachments:{
+          filename: file.name,
+          fileUrl:fileurl,
+          uploadAt:Date.now
+          }
+          }
+        
     
     
         project.teammates[teammateIndex].comments.push(newComment);

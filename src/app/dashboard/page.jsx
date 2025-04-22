@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
+import { toast } from "sonner"
 export default function Dashboard() {
   const router = useRouter()
   const { data: session, status } = useSession()
@@ -97,7 +97,7 @@ export default function Dashboard() {
       setDeadline(null)
       showalltask()
     } else {
-      alert(data.message || "Failed to add task")
+    alert("all fields are required")
     }
   }
 
@@ -126,6 +126,7 @@ export default function Dashboard() {
       await res.json()
       showalltask()
     } catch (error) {
+      toast.error("Server error try again later.")
       console.error("Error in PUT request", error)
     } finally {
       setLoadingTasks(false)

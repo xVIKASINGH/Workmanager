@@ -98,7 +98,7 @@ Now write a performance summary with constructive feedback and suggestions for i
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           username, 
-          feedback: feedbacks[username],
+          content: feedbacks[username],
           projectId: id
         })
       });
@@ -106,8 +106,10 @@ Now write a performance summary with constructive feedback and suggestions for i
      
       const newFeedback = {
         username: username,
-        feedback: feedbacks[username],
-        createdAt: new Date().toISOString()
+        feedback: {
+          content: feedbacks[username],
+          createdAt: Date.now()
+        }
       };
       
       setfetchFeedbacks(prev => [...prev, newFeedback]);
@@ -271,8 +273,7 @@ Now write a performance summary with constructive feedback and suggestions for i
           </CardContent>
         </Card>
       </div>
-      
-      {/* Bottom section - Project Progress */}
+   
       <Card>
         <CardHeader>
           <CardTitle>Project Progress</CardTitle>
@@ -368,10 +369,15 @@ Now write a performance summary with constructive feedback and suggestions for i
       .filter(fb => fb.username === member.username)
       .map((feedback, idx) => (
         <div key={idx} className="p-3 bg-blue-50 rounded-md text-sm">
-          <p className="text-gray-800">{feedback.feedback}</p>
-          <p className="text-xs text-gray-500 mt-1">
-            {new Date(feedback.createdAt).toLocaleDateString()} 
-          </p>
+          
+          <p className="text-gray-800">
+        {feedback?.feedback?.content || "No content available"}
+      </p>
+      <p className="text-xs text-gray-500 mt-1">
+        {feedback?.feedback?.createdAt ? 
+          new Date(feedback.feedback.createdAt).toLocaleDateString() : 
+          "Date not available"}
+      </p>
         </div>
       ))
     }

@@ -5,7 +5,8 @@ import { NextResponse } from "next/server";
 
 export async function POST(request,{params}) {
 
-    const {feedback,projectId,username}=await request.json()
+    const {content,projectId,username}=await request.json()
+    console.log(content,projectId,username)
     const {id}=await params;
 try {
     await Dbconnect();
@@ -14,13 +15,22 @@ try {
  if(!project){
     return NextResponse.json({messageL:"proejct not found"},{status:403})
  }
- const feedbacks=[];
+ let feedbacksend=false;
  for(let teammate of project.teammates){
     if(teammate.userId.username===username){
-        teammate.feedback=feedback
+        teammate.feedback={
+            content:content,
+            createdAt:Date.now()
+        }
+        feedbacksend=true
     }
  }
-
+ if (!feedbacksend) {
+    return NextResponse.json(
+      { message: "Teammate not found" },
+      { status: 404 }
+    );
+  }
  
  await project.save();
  return NextResponse.json({project},{message:"Feedback send successfully"},{statusText:"okayyyyy"})

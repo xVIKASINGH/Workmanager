@@ -29,8 +29,9 @@ function Page() {
   const [myTasks, setMyTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
+  const [file,setfiles]=useState("");
   const [activeTab, setActiveTab] = useState("tasks");
-
+  const [feedback,setfeedback]=useState({})
   const { id } = useParams();
 
   const fetchProject = async () => {
@@ -49,6 +50,7 @@ function Page() {
         );
         
         if (currentUserData) {
+          setfeedback(currentUserData.feedback)
           setMyTasks(currentUserData);
         }
       }
@@ -100,29 +102,28 @@ function Page() {
 
   const handleAddComment = async (e) => {
     e.preventDefault();
-    
-    if (!newComment.trim()) return;
-    
+    if (!newComment.trim() && !file) return;
+  
     try {
+      const formData = new FormData();
+      formData.append("content", newComment);
+      if (file) formData.append("attachments", file); 
+  
       const response = await fetch(`/api/project/myprojects/add-comment/${id}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: newComment,
-        }),
+        body: formData,
       });
-
+  
       if (response.ok) {
         setNewComment("");
+        setfiles(null);
         fetchProject();
       }
     } catch (error) {
       console.error("Error adding comment:", error);
     }
   };
-
+  
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -219,8 +220,8 @@ function Page() {
               
               <div className="flex items-center gap-3 mb-4">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${session?.user?.name || 'TM'}`} />
-                  <AvatarFallback>{session?.user?.name?.[0] || 'TM'}</AvatarFallback>
+                  <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${session?.user?.username || 'TM'}`} />
+                  <AvatarFallback>{session?.user?.username?.[0] || 'TM'}</AvatarFallback>
                 </Avatar>
                 <div>
                   <h3 className="font-semibold text-lg">{session?.user?.name}</h3>
@@ -292,7 +293,7 @@ function Page() {
                   <p className="font-medium">{formatDate(project.createdAt)}</p>
                 </div>
               </div>
-              
+         
               <div>
                 <p className="text-sm text-gray-500 mb-2">Overall Progress</p>
                 <Progress value={parseInt(project.progress)} className="h-2" />
@@ -380,19 +381,7 @@ function Page() {
                               </Badge>
                             </div>
                             
-                            {task.attachments?.length > 0 && (
-                              <div className="mt-3 pt-3 border-t">
-                                <p className="text-xs text-gray-500 mb-2">Attachments:</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {task.attachments.map((file, fileIndex) => (
-                                    <Badge key={fileIndex} variant="outline" className="text-xs flex items-center gap-1">
-                                      <PaperclipIcon className="h-3 w-3" />
-                                      {file.filename}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                          
                             
                             <div className="mt-4 pt-3 border-t flex justify-end gap-2">
                               {task.status !== 'in-progress' && (
@@ -473,24 +462,33 @@ function Page() {
                                 {formatDate(comment.timestamp)}
                               </div>
                               
-                              {comment.attachments?.length > 0 && (
-                                <div className="mt-2 pt-2 border-t border-blue-200">
-                                  <div className="flex flex-wrap gap-2">
-                                    {comment.attachments.map((file, fileIndex) => (
-                                      <Badge key={fileIndex} variant="outline" className="text-xs flex items-center gap-1">
-                                        <PaperclipIcon className="h-3 w-3" />
-                                        {file.filename}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
+                            {comment.attachments?.length > 0 && (
+  <div className="mt-2 pt-2 border-t border-blue-200">
+    <div className="flex flex-wrap gap-2">
+      {comment.attachments.map((file, fileIndex) => (
+        <a
+          key={fileIndex}
+          href={file.fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="no-underline"
+        >
+          <Badge variant="outline" className="text-xs flex items-center gap-1 cursor-pointer">
+            <PaperclipIcon className="h-3 w-3 " />
+            {file.filename}
+          </Badge>
+        </a>
+      ))}
+    </div>
+  </div>
+)}
+
                             </div>
                             
                             {teammate.userId._id === session?.user?.id && (
                               <Avatar className="h-8 w-8 mt-1">
                                 <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${session?.user?.username || 'Me'}`} />
-                                <AvatarFallback>{session?.user?.name?.[0] || 'Me'}</AvatarFallback>
+                                <AvatarFallback>{session?.user?.username?.[0] || 'Me'}</AvatarFallback>
                               </Avatar>
                             )}
                           </div>
@@ -506,37 +504,53 @@ function Page() {
                   </div>
                   
                   <form onSubmit={handleAddComment} className="mt-4 pt-4 border-t">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${session?.user?.username || 'Me'}`} />
-                        <AvatarFallback>{session?.user?.name?.[0] || 'Me'}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <Textarea
-                          placeholder="Write a comment..."
-                          value={newComment}
-                          onChange={(e) => setNewComment(e.target.value)}
-                          className="resize-none"
-                          rows={2}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center mt-2">
-                      <Button type="button" variant="outline" size="sm" className="gap-1">
-                        <Paperclip className="h-4 w-4" />
-                        Attach File
-                      </Button>
-                      <Button type="submit" size="sm" disabled={!newComment.trim()}>
-                        Send
-                      </Button>
-                    </div>
-                  </form>
+  <div className="flex items-center gap-2">
+    <Avatar className="h-8 w-8">
+      <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${session?.user?.username || 'Me'}`} />
+      <AvatarFallback>{session?.user?.name?.[0] || 'Me'}</AvatarFallback>
+    </Avatar>
+    <div className="flex-1">
+      <Textarea
+        placeholder="Write a comment..."
+        value={newComment}
+        onChange={(e) => setNewComment(e.target.value)}
+        className="resize-none"
+        rows={2}
+      />
+    </div>
+  </div>
+
+  <div className="flex justify-between items-center mt-2">
+    <div className="flex items-center gap-2">
+      <input
+        type="file"
+        id="file-upload"
+        className="hidden"
+        onChange={(e) => setfiles(e.target.files[0])}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="gap-1"
+        onClick={() => document.getElementById('file-upload').click()}
+      >
+        <Paperclip className="h-4 w-4" />
+        Attach File
+      </Button>
+      {file && <span className="text-sm text-gray-500">{file.name}</span>}
+    </div>
+    <Button type="submit" size="sm" disabled={!newComment.trim() && !file}>
+      Send
+    </Button>
+  </div>
+</form>
+
                 </div>
               )}
             </CardContent>
           </Card>
-          
-          {/* Upcoming Deadlines */}
+       
           <Card>
             <CardHeader>
               <CardTitle>Upcoming Deadlines</CardTitle>
@@ -570,6 +584,29 @@ function Page() {
               )}
             </CardContent>
           </Card>
+          <Card>
+      <CardHeader>
+        <CardTitle>Feedback</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {feedback?.content ? (
+          <div className="p-3 rounded border">
+            <div className="flex justify-between items-center mb-2">
+              <Badge variant="outline" className="text-xs">
+                {formatDate(feedback.createdAt)}
+              </Badge>
+            </div>
+            <p className="text-sm text-gray-700">
+              {feedback.content}
+            </p>
+          </div>
+        ) : (
+          <div className="text-center py-6">
+            <p className="text-gray-500">No feedback available</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
         </div>
       </div>
     </div>
