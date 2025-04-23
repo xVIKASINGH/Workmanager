@@ -3,6 +3,7 @@ import { Dbconnect } from "@/helper/dbConnect";
 import User from "@/models/Userschema";
 import bcrypt from "bcryptjs";
 import NextAuth from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
 export const authOptions={
     providers: [
         CredentialsProvider({
@@ -27,6 +28,11 @@ export const authOptions={
             return { id: user._id.toString(), email: user.email ,username:user.username};
           }
         })
+        ,
+        GoogleProvider({
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET
+        })
       ],
       pages: {
         signIn: "/login",
@@ -35,18 +41,33 @@ export const authOptions={
         strategy: "jwt",
       },
       callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, account }) {
           if (user) {
-            token.id = user.id;
-            token.username=user.username
+       
+            const existingUser = await User.findOne({ email: user.email });
+      
+            if (existingUser) {
+              token.id = existingUser._id.toString(); 
+              token.username = existingUser.username;
+            } else {
+           
+              const newUser = await User.create({
+                email: user.email,
+                username: user.name.replace(/\s/g, "").toLowerCase(),
+              });
+              token.id = newUser._id.toString();
+              token.username = newUser.username;
+            }
           }
           return token;
         },
+        
         async session({ session, token }) {
           if (token?.id) {
             
             session.user.id = token.id;
             session.user.username=token.username
+            session.user.email=token.email
           }
           return session;
         },
