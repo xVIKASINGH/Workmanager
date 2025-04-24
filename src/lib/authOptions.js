@@ -49,7 +49,7 @@ export const authOptions={
       callbacks: {
         async jwt({ token, user, account }) {
           if (user) {
-       
+         await Dbconnect();
             const existingUser = await User.findOne({ email: user.email });
       
             if (existingUser) {
