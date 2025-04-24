@@ -152,7 +152,7 @@ export default function Register() {
                       />
                     </div>
                     <Button type="submit" className="w-full">
-                      Login
+                     Signup
                     </Button>
                   </div>
                   <div className="text-center text-sm">
