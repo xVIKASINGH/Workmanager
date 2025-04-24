@@ -94,10 +94,10 @@ export default function Home() {
               </>
             ) : (
               <>
-                <Button variant="ghost" size="sm" onClick={() => signIn()}>
+                <Button variant="ghost" size="sm" onClick={() => (window.location.href = "/register")}>
                   Login
                 </Button>
-                <Button size="sm" onClick={() => (window.location.href = "/register")}>
+                <Button size="sm" >
                   Sign Up
                 </Button>
               </>

@@ -47,7 +47,7 @@ export default function LoginPage() {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="username">username</Label>
-                    <Input id="username" type="text" placeholder="m@example.com"onChange={(e) => setForm({ ...form, username: e.target.value })} required />
+                    <Input id="username" type="text" placeholder="Enter username"onChange={(e) => setForm({ ...form, username: e.target.value })} required />
                   </div>
                   <div className="grid gap-2">
                     <div className="flex items-center">

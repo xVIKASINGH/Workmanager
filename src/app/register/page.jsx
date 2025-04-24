@@ -157,9 +157,9 @@ export default function Register() {
                     </Button>
                   </div>
                   <div className="text-center text-sm">
-                    Don&apos;t have an account?{" "}
+                    Already have an account?{" "}
                     <a href="#" className="underline underline-offset-4">
-                      Sign up
+                      Log in
                     </a>
                   </div>
                 </div>
