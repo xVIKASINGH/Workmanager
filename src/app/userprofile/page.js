@@ -157,7 +157,7 @@ export default function UserProfilePage() {
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <Avatar className="h-16 w-16 border">
               <AvatarFallback className="bg-primary/10 text-primary text-xl">
-                {session?.user?.name?.charAt(0).toUpperCase() || "U"}
+                {session?.user?.username?.charAt(0).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
 

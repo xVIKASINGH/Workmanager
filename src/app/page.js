@@ -18,7 +18,10 @@ import {
   ChevronRight,
   ArrowUpRight,
   Menu,
-  User
+  User,
+  Bot,
+  File,
+  MessageSquare
 } from "lucide-react"
 import {
   Sheet,
@@ -41,7 +44,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background">
-      {/* Header/Navigation */}
+
       <header className="border-b sticky top-0 bg-background/80 backdrop-blur-sm z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -51,15 +54,14 @@ export default function Home() {
             <span className="text-xl font-bold">WorkManager</span>
           </div>
           
-          {/* Desktop Navigation */}
+
           <nav className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
             <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
             <a href="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
             <a href="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">About</a>
           </nav>
-          
-          {/* Auth Buttons - Desktop */}
+
           <div className="hidden md:flex items-center gap-4">
             {session ? (
               <>
@@ -76,12 +78,10 @@ export default function Home() {
                     <DropdownMenuItem onClick={() => (window.location.href = "/dashboard")}>
                       Dashboard
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => (window.location.href = "/profile")}>
+                    <DropdownMenuItem onClick={() => (window.location.href = "/userprofile")}>
                       Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => (window.location.href = "/settings")}>
-                      Settings
-                    </DropdownMenuItem>
+                   
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => signOut()}>
                       Logout
@@ -105,7 +105,7 @@ export default function Home() {
             )}
           </div>
           
-          {/* Mobile Menu */}
+
           <Sheet>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon">
@@ -192,7 +192,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
+    
       <section id="features" className="py-24 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-16">
@@ -224,51 +224,30 @@ export default function Home() {
             />
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mt-8">
-            <FeatureCard
-              icon={<Calendar className="h-6 w-6 text-primary" />}
-              title="Calendar Integration"
-              description="Sync your tasks with your calendar to never miss an important deadline."
-            />
-            <FeatureCard
-              icon={<Bell className="h-6 w-6 text-primary" />}
-              title="Smart Notifications"
-              description="Get timely reminders about upcoming deadlines and important updates."
-            />
-            <FeatureCard
-              icon={<Zap className="h-6 w-6 text-primary" />}
-              title="Quick Actions"
-              description="Perform common actions with just a few clicks to save time and stay focused."
-            />
-          </div>
+   <div className="grid md:grid-cols-3 gap-8 mt-8">
+  <FeatureCard
+    icon={<File className="h-6 w-6 text-primary" />}
+    title="File Attachment System"
+    description="Easily attach documents, images, and files to tasks for better collaboration and documentation."
+  />
+  <FeatureCard
+    icon={<Bot className="h-6 w-6 text-primary" />}
+    title="AI-Generated Work Progress"
+    description="Get intelligent insights and analysis on your project progress powered by advanced AI."
+  />
+  <FeatureCard
+    icon={<MessageSquare className="h-6 w-6 text-primary" />}
+    title="Feedback System"
+    description="Give and receive targeted feedback to team members to improve project outcomes and performance."
+  />
+</div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 px-4 bg-primary/5">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <p className="text-4xl font-bold text-primary mb-2">10k+</p>
-              <p className="text-sm text-muted-foreground">Active Users</p>
-            </div>
-            <div className="text-center">
-              <p className="text-4xl font-bold text-primary mb-2">5M+</p>
-              <p className="text-sm text-muted-foreground">Tasks Completed</p>
-            </div>
-            <div className="text-center">
-              <p className="text-4xl font-bold text-primary mb-2">98%</p>
-              <p className="text-sm text-muted-foreground">Satisfaction Rate</p>
-            </div>
-            <div className="text-center">
-              <p className="text-4xl font-bold text-primary mb-2">24/7</p>
-              <p className="text-sm text-muted-foreground">Support</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      
+  
 
-      {/* Testimonials Section */}
+     
       <section id="testimonials" className="py-24 px-4 bg-slate-50">
         <div className="container mx-auto">
           <div className="text-center mb-16">
@@ -304,7 +283,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+   
       <section className="py-24 px-4">
         <div className="container mx-auto max-w-5xl bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 md:p-16">
           <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center">
@@ -336,7 +315,7 @@ export default function Home() {
             <div className="flex-1 hidden md:block">
               <div className="relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-blue-500/20 rounded-full blur-sm"></div>
-                <div className="relative rounded-full overflow-hidden border-4 border-white shadow-lg ">
+                <div className="relative  overflow-hidden border-4 border-white shadow-lg ">
                   <img 
                     src="Screenshot 2025-04-17 114817.png" 
                     alt="WorkManager App" 
