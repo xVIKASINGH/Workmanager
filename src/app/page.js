@@ -58,8 +58,7 @@ export default function Home() {
           <nav className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</a>
             <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
-            <a href="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-            <a href="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">About</a>
+     
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
@@ -116,8 +115,7 @@ export default function Home() {
               <div className="flex flex-col gap-6 mt-8">
                 <a href="#features" className="text-lg font-medium">Features</a>
                 <a href="#testimonials" className="text-lg font-medium">Testimonials</a>
-                <a href="/pricing" className="text-lg font-medium">Pricing</a>
-                <a href="/about" className="text-lg font-medium">About</a>
+              
                 <Separator />
                 {session ? (
                   <>
