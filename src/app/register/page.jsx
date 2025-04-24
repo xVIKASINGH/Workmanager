@@ -55,11 +55,10 @@ export default function Register() {
 
   return (
     <div className="min-h-svh flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-[#f8f9fa] via-[#e9ecef] to-[#dee2e6] p-6 md:p-10 relative overflow-hidden">
-      {/* Background Blobs */}
+     
       <div className="absolute w-72 h-72 bg-black/5 rounded-full top-10 left-10 blur-3xl animate-pulse" />
       <div className="absolute w-80 h-80 bg-black/10 rounded-full bottom-20 right-10 blur-2xl animate-pulse" />
 
-      {/* Login Card */}
       <div className="z-10 flex w-full max-w-sm flex-col gap-6">
         <div className="flex flex-col gap-6">
           <Card>
@@ -158,7 +157,7 @@ export default function Register() {
                   </div>
                   <div className="text-center text-sm">
                     Already have an account?{" "}
-                    <a href="#" className="underline underline-offset-4">
+                    <a href="/login" className="underline underline-offset-4">
                       Log in
                     </a>
                   </div>
