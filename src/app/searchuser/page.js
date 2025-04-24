@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Search, User, UserPlus, Clock, Check, ArrowLeft, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-
+import { toast } from "sonner"
 export default function SearchUserPage() {
   const { data: session, status } = useSession()
   const [username, setUsername] = useState("")
@@ -86,7 +86,7 @@ export default function SearchUserPage() {
       })
       const data = await res.json()
       if (res.ok) {
-        alert(data.message || "Request sent successfully")
+        toast(data.message || "Request sent successfully")
         setSendreq((prev) => [...prev, userId])
       }
     } catch (error) {

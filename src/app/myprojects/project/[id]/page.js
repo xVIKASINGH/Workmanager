@@ -72,6 +72,11 @@ const ProjectDetailsPage = () => {
   const [taskRatings, setTaskRatings] = useState({});
   const [taskReviews, setTaskReviews] = useState({});
   
+
+  if (!session) {
+    router.push("/login")
+    return null
+  }
   const [formData, setFormData] = useState({
     teammateId: "",
     task: "",

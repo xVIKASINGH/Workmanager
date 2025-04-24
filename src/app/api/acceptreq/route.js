@@ -6,7 +6,7 @@ import { NextResponse } from "next/server"
 
 
 export async function POST(request,{params}) {
-    
+    console.log(params)
  
     const {reqId}=await request.json();
 

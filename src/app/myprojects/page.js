@@ -11,13 +11,14 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 
+import { useRouter } from 'next/navigation'
 function ProjectsPage() {
   const { data: session, status } = useSession()
   const [myProjects, setMyProjects] = useState([])
   const [ownedProjects, setOwnedProjects] = useState([])
   const [teamProjects, setTeamProjects] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-
+const router=useRouter();
   const fetchProjects = async () => {
     try {
       setIsLoading(true)
@@ -167,7 +168,7 @@ function ProjectsPage() {
           : "You're not part of any team projects yet"}
       </p>
       {type === 'owned' && (
-        <Button>
+        <Button onClick={()=>router.push("/project")}>
           <Plus className="h-4 w-4 mr-2" />
           Create Project
         </Button>

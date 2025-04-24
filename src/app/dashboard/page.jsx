@@ -97,7 +97,7 @@ export default function Dashboard() {
       setDeadline(null)
       showalltask()
     } else {
-    alert("all fields are required")
+   toast.error("All fields are required")
     }
   }
 
@@ -156,7 +156,7 @@ export default function Dashboard() {
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">WorkManager Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Welcome back, {session?.user?.name || "User"}</p>
+            <p className="text-muted-foreground mt-1">Welcome back, {session?.user?.username || "User"}</p>
           </div>
 
           <div className="flex gap-2 mt-4 md:mt-0">

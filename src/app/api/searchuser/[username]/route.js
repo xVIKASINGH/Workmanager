@@ -47,16 +47,11 @@ export async function GET(request,{params}) {
 
 export async function POST(request,{params}){
     
-  
- const {currentUserId}=await request.json()
- 
-  
-    const {username}=await params;
+  const {targetUserId,currentUserId}=await request.json()
+
     try {
         await Dbconnect();
-        const user=await User.findOne({
-            username
-        })
+        const user=await User.findById(targetUserId)
         if(!user){
             return NextResponse.json({message:"No user found for this username"},{status:401})
         }
