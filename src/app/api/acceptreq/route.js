@@ -20,11 +20,12 @@ export async function POST(request,{params}) {
       collabobject.status="accepted";
       const senderid=collabobject.sender
       const reciverid=collabobject.reciever
-      const sender=await User.findById(
-        senderid
-    )
-      const reciver=await User.findById(
-        reciverid      )
+    const [sender,reciver]=await Promise.all(
+   [
+    User.findById(senderid),
+    User.findById(reciverid),
+   ]
+  )
 
 
        sender.collaborators.push(reciverid);
@@ -33,7 +34,7 @@ export async function POST(request,{params}) {
        await collabobject.save();
        await sender.save();
        await reciver.save();
-      return NextResponse.json({message:"req accepted hehe"},{status:201})
+      return NextResponse.json({message:"COnnection estabished successfully"},{status:201})
     } catch (error) {
         console.error("Error while fetcinf collab req",error);
         return NextResponse.json({message:"Error aa gyi"},{status:500})
