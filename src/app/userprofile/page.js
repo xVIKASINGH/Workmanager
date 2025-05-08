@@ -84,9 +84,9 @@ export default function UserProfilePage() {
       })
       const data = await res.json()
       if (res.ok) {
-        // Update UI
+       
         setIncoming((prev) => prev.filter((req) => req._id !== reqId))
-        // Refresh connections
+  
         fetchAcceptedConnections()
       }
     } catch (error) {
