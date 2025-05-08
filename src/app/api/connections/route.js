@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/authOptions";
 
 
 export async function GET(params) {
+    await Dbconnect();
     const session=await getServerSession(authOptions);
 try {
     const user=await User.findById(session.user.id).populate('collaborators');
