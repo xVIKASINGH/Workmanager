@@ -6,6 +6,8 @@ import { Dbconnect } from "@/helper/dbConnect";
 
 
 export async function POST(request) {
+  const body=await request.json();
+  const { title, description, deadline } = body;
 await Dbconnect();
 
   const session = await getServerSession(authOptions);
@@ -13,7 +15,7 @@ await Dbconnect();
     return NextResponse.json({ message: "You must be logged in" }, { status: 401 });
   }
 
-  const { title, description, deadline } = await request.json();
+
 
   if (!title || !description || !deadline) {
     return NextResponse.json({ message: "All fields are required" }, { status: 400 });
