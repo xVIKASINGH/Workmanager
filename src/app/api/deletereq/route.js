@@ -16,7 +16,7 @@ export async function POST(request,{params}) {
       if(!collabobject){
         return NextResponse.json({message:"request not found"},{status:401})
       }
-      console.log(collabobject)
+     
       collabobject.status="rejected";
        await collabobject.save();
       
