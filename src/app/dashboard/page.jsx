@@ -21,8 +21,11 @@ import {
   CheckCircle2,
   AlertCircle,
   Users,
-  Boxes
+  Boxes,
+  Menu,
+  X
 } from "lucide-react"
+import { MessageCircleMoreIcon } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -30,10 +33,12 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
+
 export default function Dashboard() {
   const router = useRouter()
   const { data: session, status } = useSession()
   const [isOpen, setIsOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [task, setTask] = useState("")
   const [description, setDescription] = useState("")
   const [deadline, setDeadline] = useState(null)
@@ -97,7 +102,7 @@ export default function Dashboard() {
       setDeadline(null)
       showalltask()
     } else {
-   toast.error("All fields are required")
+      toast.error("All fields are required")
     }
   }
 
@@ -150,147 +155,254 @@ export default function Dashboard() {
 
   const pendingTasks = allTasks.filter((task) => !task.completion)
 
+  const sidebarItems = [
+    {
+      label: "Create Group Project",
+      icon: Users,
+      onClick: () => router.push("/project"),
+      variant: "ghost"
+    },
+    {
+      label: "Group Projects",
+      icon: Boxes,
+      onClick: () => router.push("/myprojects"),
+      variant: "ghost"
+    },
+    {
+      label: "Profile",
+      icon: User,
+      onClick: () => router.push("/userprofile"),
+      variant: "ghost"
+    },
+    {
+      label: "Search Users",
+      icon: Search,
+      onClick: () => router.push("/searchuser"),
+      variant: "ghost"
+    },
+    {
+     label:"messages",
+     icon:MessageCircleMoreIcon,
+     onClick: ()=>router.push("/socket-test"),
+     variant:"ghost",
+    },
+    {
+      label: "Log Out",
+      icon: LogOut,
+      onClick: () => signOut({ callbackUrl: "/" }),
+      variant: "ghost",
+      className: "text-red-600 hover:text-red-700 hover:bg-red-50 mt-auto"
+    }
+  ]
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4 md:p-6">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">WorkManager Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Welcome back, {session?.user?.username || "User"}</p>
-          </div>
-
-          <div className="flex gap-2 mt-4 md:mt-0">
-          <Button variant="outline" size="sm" onClick={() => router.push("/project")}>
-          <Users className="h-4 w-4 mr-2" />
-             
-             Create group project
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => router.push("/myprojects")}>
-            <Boxes className="h-4 w-4 mr-2" />
-            Group projects
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => router.push("/userprofile")}>
-              <User className="h-4 w-4 mr-2" />
-              Profile
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => router.push("/searchuser")}>
-              <Search className="h-4 w-4 mr-2" />
-              Search Users
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => signOut({ callbackUrl: "/" })}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Log out
+    <div className="min-h-screen bg-background flex">
+      {/* Sidebar */}
+      <aside className={cn(
+        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 shadow-sm transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex flex-col h-full">
+          {/* Sidebar Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <ClipboardList className="h-5 w-5 text-white" />
+              </div>
+              <span className="font-semibold text-lg">WorkManager</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <X className="h-5 w-5" />
             </Button>
           </div>
-        </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Tasks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <ClipboardList className="h-5 w-5 text-primary mr-2" />
-                <span className="text-2xl font-bold">{allTasks.length || 0}</span>
+          {/* User Info */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <User className="h-5 w-5 text-primary" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="font-medium text-sm">{session?.user?.username || "User"}</p>
+                <p className="text-xs text-muted-foreground">Welcome back</p>
+              </div>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                <span className="text-2xl font-bold">{completedTasks.length || 0}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <Clock className="h-5 w-5 text-amber-500 mr-2" />
-                <span className="text-2xl font-bold">{allTasks.length - completedTasks.length || 0}</span>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Navigation */}
+          <nav className="flex-1 p-4">
+            <div className="space-y-2">
+              {sidebarItems.map((item, index) => (
+                <Button
+                  key={index}
+                  variant={item.variant}
+                  className={cn(
+                    "w-full justify-start h-10 px-3 font-normal",
+                    item.className
+                  )}
+                  onClick={() => {
+                    item.onClick()
+                    setIsSidebarOpen(false)
+                  }}
+                >
+                  <item.icon className="h-4 w-4 mr-3" />
+                  {item.label}
+                </Button>
+              ))}
+            </div>
+          </nav>
         </div>
+      </aside>
 
-        <div className="flex flex-wrap gap-2 mb-8">
-          <Button onClick={handleAddTask}>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Add Task
-          </Button>
-          <Button variant="secondary" onClick={showalltask}>
-            <ClipboardList className="h-4 w-4 mr-2" />
-            Refresh Tasks
-          </Button>
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 lg:ml-0">
+        <div className="container mx-auto p-4 md:p-6">
+          {/* Mobile Header */}
+          <div className="flex items-center justify-between mb-6 lg:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-semibold">Dashboard</h1>
+            <div className="w-10" />
+          </div>
+
+          {/* Desktop Header */}
+          <header className="hidden lg:block mb-8">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+              <p className="text-muted-foreground mt-1">Manage your tasks and projects</p>
+            </div>
+          </header>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Tasks</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center">
+                  <ClipboardList className="h-5 w-5 text-primary mr-2" />
+                  <span className="text-2xl font-bold">{allTasks.length || 0}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
+                  <span className="text-2xl font-bold">{completedTasks.length || 0}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center">
+                  <Clock className="h-5 w-5 text-amber-500 mr-2" />
+                  <span className="text-2xl font-bold">{allTasks.length - completedTasks.length || 0}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2 mb-8">
+            <Button onClick={handleAddTask}>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Add Task
+            </Button>
+            <Button variant="secondary" onClick={showalltask}>
+              <ClipboardList className="h-4 w-4 mr-2" />
+              Refresh Tasks
+            </Button>
+          </div>
+
+          {/* Tasks Tabs */}
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="all">All Tasks</TabsTrigger>
+              <TabsTrigger value="pending">Pending</TabsTrigger>
+              <TabsTrigger value="completed">Completed</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all">
+              {loadingTasks ? (
+                <div className="w-full flex justify-center py-8">
+                  <Progress value={66} className="w-[60%] max-w-md" />
+                </div>
+              ) : allTasks.length === 0 ? (
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No tasks found. Add a new task to get started.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {allTasks.map((task) => (
+                    <TaskCard key={task._id} task={task} onComplete={updateCompletion} onDelete={handleDelete} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="pending">
+              {pendingTasks.length === 0 ? (
+                <div className="text-center py-12">
+                  <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
+                  <p className="text-muted-foreground">All tasks completed! Great job!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {pendingTasks.map((task) => (
+                    <TaskCard key={task._id} task={task} onComplete={updateCompletion} onDelete={handleDelete} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="completed">
+              {completedTasks.length === 0 ? (
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No completed tasks yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {completedTasks.map((task) => (
+                    <TaskCard key={task._id} task={task} onComplete={updateCompletion} onDelete={handleDelete} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
-
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="all">All Tasks</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all">
-            {loadingTasks ? (
-              <div className="w-full flex justify-center py-8">
-                <Progress value={66} className="w-[60%] max-w-md" />
-              </div>
-            ) : allTasks.length === 0 ? (
-              <div className="text-center py-12">
-                <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No tasks found. Add a new task to get started.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {allTasks.map((task) => (
-                  <TaskCard key={task._id} task={task} onComplete={updateCompletion} onDelete={handleDelete} />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="pending">
-            {pendingTasks.length === 0 ? (
-              <div className="text-center py-12">
-                <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
-                <p className="text-muted-foreground">All tasks completed! Great job!</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pendingTasks.map((task) => (
-                  <TaskCard key={task._id} task={task} onComplete={updateCompletion} onDelete={handleDelete} />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="completed">
-            {completedTasks.length === 0 ? (
-              <div className="text-center py-12">
-                <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No completed tasks yet.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {completedTasks.map((task) => (
-                  <TaskCard key={task._id} task={task} onComplete={updateCompletion} onDelete={handleDelete} />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
       </div>
 
+      {/* Add Task Modal */}
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setIsOpen(false)}>
           <Transition.Child

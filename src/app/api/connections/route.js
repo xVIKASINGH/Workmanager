@@ -10,8 +10,9 @@ export async function GET(params) {
     const session=await getServerSession(authOptions);
 try {
     const user=await User.findById(session.user.id).populate('collaborators');
-
+    
     const connections=user.collaborators
+    console.log("connections",connections);
     return NextResponse.json({message:"collaboratos finds successfully",connections})
 } catch (error) {
     console.error("error occurredd",error);

@@ -19,13 +19,7 @@ export async function GET(request){
      user:session.user.id
     })
   
-
-   
-  
-  
     return NextResponse.json(alltask,{status:201});
   
-   
- 
   
   }
