@@ -1,7 +1,7 @@
 import { Server } from "socket.io";
 
 let io;
-const onlineUsers = new Map(); // userId -> { socketId, username }
+const onlineUsers = new Map(); 
 
 export default function handler(req, res) {
   if (!res.socket.server.io) {
@@ -27,8 +27,7 @@ export default function handler(req, res) {
 
       // Send message to both sender and recipient
       socket.on("send-message", ({ to, from, fromUsername, text }) => {
-        console.log("send-message called", { to, from });
-console.log("onlineUsers keys:", Array.from(onlineUsers.keys()));
+       
         const toUser = onlineUsers.get(String(to));
         const fromUser = onlineUsers.get(String(from));
         const msg = {

@@ -22,19 +22,42 @@ export default function MessagesPage() {
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-const [userConnections, setUserConnections] = useState([]);
-const currentUser = String(session?.user?.id || session?.user?.email || `guest_${Date.now()}`);
+  const [userConnections, setUserConnections] = useState([]);
+  const currentUser = String(session?.user?.id || session?.user?.email || `guest_${Date.now()}`);
   const currentUsername = session?.user?.username || session?.user?.name || session?.user?.email || "Guest User";
+  const [allConnections, setAllConnections] = useState([]);
+
+  // Fetch messages function - moved outside useEffect so it can be reused
+  const fetchMessages = async (userId) => {
+    try {
+      const res = await fetch(`/api/messages/fetchmessages?userA=${currentUser}&userB=${userId}`);
+      const data = await res.json();
+      setChats((prev) => ({
+        ...prev,
+        [userId]: (data.messages || []).map(msg => ({
+          ...msg,
+          isCurrentUser: msg.from === currentUser
+        }))
+      }));
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  };
 
   useEffect(() => {
-  fetch("/api/connections")
-    .then(res => res.json())
-    .then(data => {
-      const ids = (data.connections || []).map(conn => String(conn._id));
-      console.log("User connections (string IDs):", ids);
-      setUserConnections(ids);
-    });
-}, []);
+    fetch("/api/connections")
+      .then(res => res.json())
+      .then(data => {
+        const connections = (data.connections || []).map(conn => ({
+          ...conn,
+          userId: String(conn._id),
+        }));
+        setAllConnections(connections);
+        setUserConnections(connections.map(conn => String(conn._id)));
+      })
+      .catch(error => console.error("Error fetching connections:", error));
+  }, []);
+
   useEffect(() => {
     if (!currentUser) return;
 
@@ -52,18 +75,16 @@ const currentUser = String(session?.user?.id || session?.user?.email || `guest_$
       setIsConnected(false);
     });
 
-   
-
-socket.on("active-users", (users) => {
-  console.log("Active users from server:", users.map(u => u.userId));
-  setOnlineUsers(
-    users.filter(
-      (u) =>
-        String(u.userId) !== String(currentUser) &&
-        userConnections.includes(String(u.userId))
-    )
-  );
-});
+    socket.on("active-users", (users) => {
+      console.log("Active users from server:", users.map(u => u.userId));
+      setOnlineUsers(
+        users.filter(
+          (u) =>
+            String(u.userId) !== String(currentUser) &&
+            userConnections.includes(String(u.userId))
+        )
+      );
+    });
 
     socket.on("user-typing", ({ fromUsername, isTyping }) => {
       if (isTyping) {
@@ -73,18 +94,19 @@ socket.on("active-users", (users) => {
         setUserTyping(null);
       }
     });
+
     socket.on("receive-message", (msg) => {
-  setChats((prev) => ({
-    ...prev,
-    [msg.from]: [
-      ...(prev[msg.from] || []),
-      {
-        ...msg,
-        isCurrentUser: msg.from === currentUser
-      }
-    ]
-  }));
-});
+      setChats((prev) => ({
+        ...prev,
+        [msg.from]: [
+          ...(prev[msg.from] || []),
+          {
+            ...msg,
+            isCurrentUser: msg.from === currentUser
+          }
+        ]
+      }));
+    });
 
     socket.on("user-offline", ({ userId }) => {
       // Optionally handle user offline
@@ -95,23 +117,28 @@ socket.on("active-users", (users) => {
         socket.disconnect();
       }
     };
-  }, [currentUser, currentUsername,userConnections]);
+  }, [currentUser, currentUsername, userConnections]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chats, selectedUser]);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!selectedUser || !message.trim()) return;
+
+    const messageText = message.trim();
+    const timestamp = new Date();
 
     const newMessage = {
       from: currentUser,
+      to: selectedUser.userId,
       fromUsername: currentUsername,
-      text: message,
-      timestamp: new Date(),
+      text: messageText,
+      timestamp: timestamp,
       isCurrentUser: true
     };
 
+    // Optimistically update UI
     setChats((prev) => ({
       ...prev,
       [selectedUser.userId]: [
@@ -120,16 +147,43 @@ socket.on("active-users", (users) => {
       ]
     }));
 
-   socket.emit("send-message", {
-    
-  to: String(selectedUser.userId),
-  from: String(currentUser),
-  fromUsername: currentUsername,
-  text: message,
-});
-
+    // Clear input immediately
     setMessage("");
     stopTyping();
+
+    try {
+      // Emit to socket for real-time communication
+      socket.emit("send-message", {
+        to: String(selectedUser.userId),
+        from: String(currentUser),
+        fromUsername: currentUsername,
+        text: messageText,
+      });
+
+      // Save to database
+      const response = await fetch("/api/messages/addmessages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: String(currentUser),
+          to: String(selectedUser.userId),
+          text: messageText,
+          timestamp: timestamp,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save message to database");
+      }
+
+      const result = await response.json();
+      console.log("Message saved to DB:", result);
+
+    } catch (error) {
+      console.error("Error sending message:", error);
+      // Optionally show error to user or retry logic
+      // For now, the message stays in UI since it was optimistically added
+    }
   };
 
   const handleTyping = (value) => {
@@ -219,41 +273,52 @@ socket.on("active-users", (users) => {
           </div>
           <ScrollArea className="flex-1 px-2">
             <div className="space-y-1">
-              {onlineUsers.map((user) => (
-                <div
-                  key={user.userId}
-                 onClick={() => setSelectedUser({ ...user, userId: String(user.userId) })}
-                  className={cn(
-                    "flex items-center gap-3 p-3 mx-2 rounded-lg cursor-pointer transition-colors hover:bg-gray-100",
-                    selectedUser?.userId === user.userId && "bg-blue-50 border border-blue-200 hover:bg-blue-50"
-                  )}
-                >
-                  <div className="relative">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-white" />
+              {allConnections.map((user) => {
+                const isOnline = onlineUsers.some(u => String(u.userId) === user.userId);
+                return (
+                  <div
+                    key={user.userId}
+                    onClick={async () => {
+                      setSelectedUser({ ...user, userId: String(user.userId) });
+                      await fetchMessages(user.userId);
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 p-3 mx-2 rounded-lg cursor-pointer transition-colors hover:bg-gray-100",
+                      selectedUser?.userId === user.userId && "bg-blue-50 border border-blue-200 hover:bg-blue-50"
+                    )}
+                  >
+                    <div className="relative">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <User className="w-4 h-4 text-white" />
+                      </div>
+                      <div className={cn(
+                        "absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2 border-white rounded-full",
+                        isOnline ? "bg-green-500" : "bg-gray-300"
+                      )} />
                     </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-gray-900 truncate">
+                        {user.username}
+                      </p>
+                      <p className={cn(
+                        "text-xs",
+                        isOnline ? "text-green-600" : "text-gray-400"
+                      )}>
+                        {isOnline ? "Online" : "Offline"}
+                      </p>
+                    </div>
+                    {chats[user.userId]?.length > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {chats[user.userId].length}
+                      </Badge>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-gray-900 truncate">
-                      {user.username}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Online
-                    </p>
-                  </div>
-                  {chats[user.userId]?.length > 0 && (
-                    <Badge variant="secondary" className="text-xs">
-                      {chats[user.userId].length}
-                    </Badge>
-                  )}
-                </div>
-              ))}
-              {onlineUsers.length === 0 && (
+                );
+              })}
+              {allConnections.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p className="text-sm">No users online</p>
-                  <p className="text-xs">Users will appear here when they come online</p>
+                  <p className="text-sm">No connections</p>
                 </div>
               )}
             </div>
