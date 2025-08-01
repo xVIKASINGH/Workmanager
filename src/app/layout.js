@@ -2,7 +2,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
-import { Toaster } from "sonner";
+
 import { SocketProvider } from "@/helper/SocketProvider/socketcontextprovider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,11 +13,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
-
-
-// layout.js
-
 
 
 
