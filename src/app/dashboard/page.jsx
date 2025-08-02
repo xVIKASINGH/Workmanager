@@ -181,10 +181,16 @@ export default function Dashboard() {
       variant: "ghost"
     },
     {
-     label:"messages",
+     label:"Messages",
      icon:MessageCircleMoreIcon,
      onClick: ()=>router.push("/socket-test"),
      variant:"ghost",
+    },
+    {
+      label:"Live Board(Sketch Pad)",
+      icon:ClipboardList,
+      onClick: () => router.push("/whiteboard"),
+      variant: "ghost",
     },
     {
       label: "Log Out",
