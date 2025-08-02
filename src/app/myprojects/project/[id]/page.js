@@ -493,7 +493,7 @@ const ProjectDetailsPage = () => {
                   <CardTitle className="text-2xl">{project.title}</CardTitle>
                   <CardDescription className="mt-1 text-gray-500">Project Details</CardDescription>
                 </div>
-                <Badge className="bg-blue-500">{project.progress}% Complete</Badge>
+                <Badge className="bg-blue-500">{project.progress.toFixed(0)}% Complete</Badge>
               </div>
             </CardHeader>
             <CardContent>

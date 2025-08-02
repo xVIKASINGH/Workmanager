@@ -1,23 +1,46 @@
+// src/helper/SocketProvider/socketcontextprovider.js
 "use client";
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { io } from "socket.io-client";
 
 const SocketContext = createContext(null);
 
+// module-level shared instance
+let sharedSocket = null;
+let isInitializing = false;
+
 export function SocketProvider({ children }) {
   const { data: session, status } = useSession();
   const [socket, setSocket] = useState(null);
-  const connectingRef = useRef(false);
 
   useEffect(() => {
-    if (connectingRef.current) return;
-    if (status !== "authenticated" || !session?.user) return;
+    // If not authenticated, tear down existing socket
+    if (status !== "authenticated" || !session?.user) {
+      if (sharedSocket) {
+        sharedSocket.off();
+        sharedSocket.disconnect();
+        sharedSocket = null;
+      }
+      setSocket(null);
+      return;
+    }
 
-    connectingRef.current = true;
+    // Already have a live socket: reuse it
+    if (sharedSocket && sharedSocket.connected) {
+      setSocket(sharedSocket);
+      return;
+    }
+
+    // Prevent racing creation
+    if (isInitializing) {
+      return;
+    }
+    isInitializing = true;
 
     const userId = session.user.id || session.user.email;
-    const username = session.user.username || session.user.name || session.user.email || "Guest";
+    const username =
+      session.user.username || session.user.name || session.user.email || "Guest";
 
     const socketInstance = io(window.location.origin, {
       path: "/api/socket",
@@ -34,7 +57,7 @@ export function SocketProvider({ children }) {
     });
 
     socketInstance.on("connect_error", (err) => {
-      console.warn("⚠️ Socket connect_error (handled):", err.message || err);
+      console.warn("⚠️ Socket connect_error (handled):", err?.message || err);
     });
 
     socketInstance.on("error", (err) => {
@@ -45,14 +68,10 @@ export function SocketProvider({ children }) {
       console.log("⚠️ Socket disconnected:", reason);
     });
 
+    sharedSocket = socketInstance;
     setSocket(socketInstance);
-
-    return () => {
-      socketInstance.off();
-      socketInstance.disconnect();
-      setSocket(null);
-      connectingRef.current = false;
-    };
+    // reset initializing after a tick so future attempts can proceed if needed
+    isInitializing = false;
   }, [session, status]);
 
   return <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>;

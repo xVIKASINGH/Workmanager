@@ -1,3 +1,4 @@
+// pages/api/socket.js (or wherever your API route lives)
 import { Server } from "socket.io";
 
 let io;
@@ -17,6 +18,7 @@ const broadcastRoomUsers = (roomId) => {
 };
 
 export default function handler(req, res) {
+  // Ensure we only initialize once
   if (!res.socket.server.io) {
     io = new Server(res.socket.server, {
       path: "/api/socket",
@@ -53,11 +55,9 @@ export default function handler(req, res) {
         const room = whiteboardRooms.get(roomId);
         room.users.set(String(userId), { username, socketId: socket.id });
 
-        // Broadcast updated user list and notify others
         broadcastRoomUsers(roomId);
         socket.to(roomId).emit("user-joined-room", { userId, username });
 
-        // Send existing canvas history to new joiner
         if (room.canvasData.length > 0) {
           socket.emit("canvas-history", room.canvasData);
         }
@@ -107,7 +107,6 @@ export default function handler(req, res) {
         io.to(roomId).emit("canvas-cleared");
       });
 
-      // Simplified voice signaling (you can keep your existing webrtc-offer/answer/ice logic)
       socket.on("voice-connected", ({ roomId: rawRoomId, userId }) => {
         const roomId = normalizeRoomId(rawRoomId);
         if (!whiteboardRooms.has(roomId)) return;
@@ -124,8 +123,8 @@ export default function handler(req, res) {
         socket.to(roomId).emit("user-voice-disconnected", { userId });
       });
 
-      // WebRTC signaling forwarded via onlineUsers map
-      const findSocket = (targetUserId) => Array.from(onlineUsers.entries()).find(([uid]) => uid === String(targetUserId));
+      const findSocket = (targetUserId) =>
+        Array.from(onlineUsers.entries()).find(([uid]) => uid === String(targetUserId));
 
       socket.on("webrtc-offer", ({ targetUserId, fromUserId, offer }) => {
         const entry = findSocket(targetUserId);
@@ -159,10 +158,12 @@ export default function handler(req, res) {
           }
         }
         if (removed) {
-          io.emit("active-users", Array.from(onlineUsers.entries()).map(([userId, { username }]) => ({ userId, username })));
+          io.emit(
+            "active-users",
+            Array.from(onlineUsers.entries()).map(([userId, { username }]) => ({ userId, username }))
+          );
           io.emit("user-offline", { userId: removed });
 
-          // Remove from any whiteboard room
           for (const [roomId, room] of whiteboardRooms.entries()) {
             if (room.users.has(String(removed))) {
               room.users.delete(String(removed));
