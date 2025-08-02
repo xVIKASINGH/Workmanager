@@ -23,6 +23,7 @@ export default function RootLayout({ children }) {
         <SessionProvider>
           <SocketProvider>
             {children}
+      
           </SocketProvider>
         </SessionProvider>
       </body>
