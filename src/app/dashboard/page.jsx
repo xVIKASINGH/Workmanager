@@ -43,7 +43,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
-
+import { GoogleGenAI } from "@google/genai"
 export default function Dashboard() {
   const router = useRouter()
   const { data: session, status } = useSession()
@@ -187,53 +187,42 @@ export default function Dashboard() {
   }
 
   // AI Assistant Functions
-  const callAIAPI = async (message, taskContext = null) => {
-    try {
-      // Replace this with your actual AI API endpoint and key
-      const API_KEY = "YOUR_API_KEY_HERE" // Change this to your actual API key
-      const API_ENDPOINT = "https://api.openai.com/v1/chat/completions" // Change this to your AI service endpoint
-      
-      let systemPrompt = "You are a helpful task management assistant. Help users with their tasks, provide suggestions for productivity, and answer questions about task management."
-      
-      if (taskContext) {
-        systemPrompt += ` The user is asking about this specific task: Title: "${taskContext.title}", Description: "${taskContext.description}", Due Date: ${taskContext.deadline ? new Date(taskContext.deadline).toLocaleDateString() : "Not set"}, Status: ${taskContext.completion ? "Completed" : "Pending"}.`
-      }
+ const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_API_KEY });
 
-      const response = await fetch(API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo", // Change this to your preferred model
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt
-            },
-            {
-              role: "user",
-              content: message
-            }
-          ],
-          max_tokens: 500,
-          temperature: 0.7
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`)
-      }
-
-      const data = await response.json()
-      return data.choices[0].message.content
-
-    } catch (error) {
-      console.error('AI API Error:', error)
-      throw error
-    }
+const callAIAPI = async (message, taskContext = null) => {
+  if (!process.env.NEXT_PUBLIC_API_KEY) {
+    throw new Error("API key is missing");
   }
+
+  // Build the full prompt with task context embedded
+  let prompt = `You are a helpful task management assistant. Help users with their tasks, provide suggestions for productivity, and answer questions about task management.You have to answer the user query based on the context of the task if provided. If no task is selected, provide general task management. Don't use emoji in your response. Don't use any markdown formatting in your response. Don't use any code blocks in your response. Don't use any bullet points in your response. keep the answer short and concise. If the user asks about a specific task, provide context-aware assistance based on the task details.keep the answer short and concise.`;
+  if (taskContext) {
+    prompt += ` The user is asking about this specific task: Title: "${taskContext.title}", Description: "${taskContext.description}", Due Date: ${
+      taskContext.deadline
+        ? new Date(taskContext.deadline).toLocaleDateString()
+        : "Not set"
+    }, Status: ${taskContext.completion ? "Completed" : "Pending"}.`;
+  }
+  prompt += `\n\nUser query: ${message}`;
+
+  try {
+    const responseStream = await ai.models.generateContentStream({
+      model: "gemini-2.0-flash",
+      contents: prompt,
+    });
+
+    let fullResponse = "";
+    for await (const chunk of responseStream) {
+      fullResponse += chunk.text || "";
+    }
+
+    return fullResponse.trim();
+  } catch (error) {
+    console.error("Gemini API Error in callAIAPI:", error);
+    throw error;
+  }
+};
+
 
   const pendingTasks = allTasks.filter((task) => !task.completion)
   const selectedTask = pendingTasks.find((t) => t._id === selectedTaskId) || null
