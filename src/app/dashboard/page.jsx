@@ -9,6 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import {
   CalendarIcon,
   CheckCheck,
   Trash,
@@ -23,7 +31,9 @@ import {
   Users,
   Boxes,
   Menu,
-  X
+  X,
+  Sparkles,
+  Send
 } from "lucide-react"
 import { MessageCircleMoreIcon } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -46,6 +56,11 @@ export default function Dashboard() {
   const [allTasks, setAllTasks] = useState([])
   const [progress, setProgress] = useState(13)
   const [loadingTasks, setLoadingTasks] = useState(false)
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false)
+  const [selectedTaskId, setSelectedTaskId] = useState(null)
+  const [chatInput, setChatInput] = useState("")
+  const [chatHistory, setChatHistory] = useState([])
+  const [isLoadingResponse, setIsLoadingResponse] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => setProgress(66), 500)
@@ -101,9 +116,23 @@ export default function Dashboard() {
       setDescription("")
       setDeadline(null)
       showalltask()
+      toast.success("Task added successfully!")
     } else {
       toast.error("All fields are required")
     }
+  }
+  
+  const showassistant = () => {
+    console.log("AI Assistant Opened")
+    setIsAssistantOpen(true)
+  }
+  
+  const closeassistant = () => {
+    setIsAssistantOpen(false)
+    // Reset chat state when closing
+    setChatHistory([])
+    setSelectedTaskId(null)
+    setChatInput("")
   }
 
   const showalltask = async () => {
@@ -115,6 +144,7 @@ export default function Dashboard() {
       setAllTasks(data)
     } catch (error) {
       console.error("Error while fetching tasks:", error)
+      toast.error("Failed to fetch tasks")
     } finally {
       setLoadingTasks(false)
     }
@@ -130,6 +160,7 @@ export default function Dashboard() {
 
       await res.json()
       showalltask()
+      toast.success("Task updated successfully!")
     } catch (error) {
       toast.error("Server error try again later.")
       console.error("Error in PUT request", error)
@@ -148,12 +179,110 @@ export default function Dashboard() {
       await res.json()
       setAllTasks((prev) => prev.filter((item) => item._id !== id))
       setCompletedTasks((prev) => prev.filter((item) => item._id !== id))
+      toast.success("Task deleted successfully!")
     } catch (error) {
       console.log("Error while deleting task, please wait...")
+      toast.error("Failed to delete task")
+    }
+  }
+
+  // AI Assistant Functions
+  const callAIAPI = async (message, taskContext = null) => {
+    try {
+      // Replace this with your actual AI API endpoint and key
+      const API_KEY = "YOUR_API_KEY_HERE" // Change this to your actual API key
+      const API_ENDPOINT = "https://api.openai.com/v1/chat/completions" // Change this to your AI service endpoint
+      
+      let systemPrompt = "You are a helpful task management assistant. Help users with their tasks, provide suggestions for productivity, and answer questions about task management."
+      
+      if (taskContext) {
+        systemPrompt += ` The user is asking about this specific task: Title: "${taskContext.title}", Description: "${taskContext.description}", Due Date: ${taskContext.deadline ? new Date(taskContext.deadline).toLocaleDateString() : "Not set"}, Status: ${taskContext.completion ? "Completed" : "Pending"}.`
+      }
+
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo", // Change this to your preferred model
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
+            {
+              role: "user",
+              content: message
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data.choices[0].message.content
+
+    } catch (error) {
+      console.error('AI API Error:', error)
+      throw error
     }
   }
 
   const pendingTasks = allTasks.filter((task) => !task.completion)
+  const selectedTask = pendingTasks.find((t) => t._id === selectedTaskId) || null
+
+  const handleSend = async () => {
+    if (!chatInput.trim() || isLoadingResponse) return
+    
+    const message = chatInput.trim()
+    setChatInput("")
+    
+    // Add user message to chat
+    const userMessage = {
+      id: Date.now(),
+      from: "user",
+      text: message,
+      timestamp: new Date()
+    }
+    
+    setChatHistory(prev => [...prev, userMessage])
+    setIsLoadingResponse(true)
+
+    try {
+      const aiResponse = await callAIAPI(message, selectedTask)
+      
+      // Add AI response to chat
+      const assistantMessage = {
+        id: Date.now() + 1,
+        from: "assistant",
+        text: aiResponse,
+        timestamp: new Date()
+      }
+      
+      setChatHistory(prev => [...prev, assistantMessage])
+      
+    } catch (error) {
+      const errorMessage = {
+        id: Date.now() + 1,
+        from: "assistant",
+        text: "Sorry, I'm having trouble connecting to the AI service. Please try again later.",
+        timestamp: new Date(),
+        isError: true
+      }
+      
+      setChatHistory(prev => [...prev, errorMessage])
+      toast.error("Failed to get AI response")
+    } finally {
+      setIsLoadingResponse(false)
+    }
+  }
 
   const sidebarItems = [
     {
@@ -182,15 +311,21 @@ export default function Dashboard() {
     },
     {
      label:"Messages",
-     icon:MessageCircleMoreIcon,
-     onClick: ()=>router.push("/socket-test"),
-     variant:"ghost",
+     icon: MessageCircleMoreIcon,
+     onClick: () => router.push("/socket-test"),
+     variant: "ghost",
     },
     {
       label:"Live Board(Sketch Pad)",
-      icon:ClipboardList,
+      icon: ClipboardList,
       onClick: () => router.push("/whiteboard"),
       variant: "ghost",
+    },
+    {
+      label:"AI Assistant",
+      icon: Sparkles,
+      onClick: () => showassistant(),
+      variant: 'ghost',
     },
     {
       label: "Log Out",
@@ -265,13 +400,132 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* Overlay for mobile */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+      {/* AI Assistant Sheet */}
+      <Sheet open={isAssistantOpen} onOpenChange={setIsAssistantOpen}>
+        <SheetContent className="flex flex-col h-full w-[600px] sm:w-[540px] p-4">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              AI Task Assistant
+            </SheetTitle>
+            <SheetDescription>
+              Get help with your tasks, productivity tips, and task management advice. Select a task for context-aware assistance.
+            </SheetDescription>
+          </SheetHeader>
+
+          {/* Task Selection */}
+          <div className="border-b pb-4">
+            <p className="font-medium mb-2 text-sm">Select a task for context (optional):</p>
+            <div className="max-h-32 overflow-y-auto space-y-1 py-2">
+              <Button
+                variant={selectedTaskId === null ? "default" : "outline"}
+                size="sm"
+                className="w-full justify-start text-left h-auto p-2 py-6"
+                onClick={() => setSelectedTaskId(null)}
+              >
+                General assistance (no specific task)
+              </Button>
+              {pendingTasks.map((task) => (
+                <Button
+                  key={task._id}
+                  variant={selectedTaskId === task._id ? "default" : "outline"}
+                  size="sm"
+                  className="w-full justify-start text-left h-auto p-2"
+                  onClick={() => setSelectedTaskId(task._id)}
+                >
+                  <div className="truncate">
+                    <div className="font-medium truncate">{task.title}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      Due: {task.deadline ? new Date(task.deadline).toLocaleDateString() : "No deadline"}
+                    </div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Chat Messages */}
+          <div className="flex-1 overflow-y-auto space-y-4 py-4">
+            {chatHistory.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Start a conversation with your AI assistant!</p>
+                <p className="text-sm mt-2">
+                  {selectedTask ? `Context: ${selectedTask.title}` : "Ask anything about task management"}
+                </p>
+              </div>
+            ) : (
+              chatHistory.map((message) => (
+                <div
+                  key={message.id}
+                  className={cn(
+                    "flex gap-3",
+                    message.from === "user" ? "justify-end" : "justify-start"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "max-w-[80%] rounded-lg px-3 py-2",
+                      message.from === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : message.isError
+                        ? "bg-red-50 text-red-700 border border-red-200"
+                        : "bg-muted"
+                    )}
+                  >
+                    <p className="text-sm">{message.text}</p>
+                    <p className="text-xs opacity-70 mt-1">
+                      {message.timestamp.toLocaleTimeString()}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+            {isLoadingResponse && (
+              <div className="flex justify-start">
+                <div className="bg-muted rounded-lg px-3 py-2 max-w-[80%]">
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    <span className="text-sm">AI is thinking...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Input Area */}
+          <div className="border-t pt-4">
+            {selectedTask && (
+              <div className="mb-2 p-2 bg-blue-50 rounded-md">
+                <p className="text-xs text-blue-600 font-medium">
+                  Context: {selectedTask.title}
+                </p>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Input
+                placeholder={selectedTask ? `Ask about "${selectedTask.title}"...` : "Ask your assistant anything..."}
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSend()
+                  }
+                }}
+                disabled={isLoadingResponse}
+              />
+              <Button 
+                onClick={handleSend} 
+                disabled={!chatInput.trim() || isLoadingResponse}
+                size="icon"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Main Content */}
       <div className="flex-1 lg:ml-0">
