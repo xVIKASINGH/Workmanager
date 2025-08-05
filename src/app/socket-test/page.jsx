@@ -76,7 +76,7 @@ export default function MessagesPage() {
     });
 
     socket.on("active-users", (users) => {
-      console.log("Active users from server:", users.map(u => u.userId));
+
       setOnlineUsers(
         users.filter(
           (u) =>
@@ -177,7 +177,6 @@ export default function MessagesPage() {
       }
 
       const result = await response.json();
-      console.log("Message saved to DB:", result);
 
     } catch (error) {
       console.error("Error sending message:", error);

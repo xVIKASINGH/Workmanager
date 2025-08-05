@@ -27,10 +27,9 @@ export default function handler(req, res) {
     });
 
     io.on("connection", (socket) => {
-      console.log("🔌 User connected:", socket.id);
 
       socket.on("user-online", ({ userId, username }) => {
-        console.log("👤 User coming online:", { userId, username, socketId: socket.id });
+
         onlineUsers.set(String(userId), { socketId: socket.id, username });
         const activeUsers = Array.from(onlineUsers.entries()).map(([userId, { username }]) => ({
           userId,
@@ -41,7 +40,7 @@ export default function handler(req, res) {
 
       socket.on("join-whiteboard-room", ({ roomId: rawRoomId, userId, username }, callback) => {
         const roomId = normalizeRoomId(rawRoomId);
-        console.log("🏠 Join whiteboard room request:", { roomId, userId, username, socketId: socket.id });
+
 
         socket.join(roomId);
         if (!whiteboardRooms.has(roomId)) {
@@ -50,7 +49,7 @@ export default function handler(req, res) {
             canvasData: [],
             voiceUsers: new Set(),
           });
-          console.log(`🆕 Created room ${roomId}`);
+
         }
         const room = whiteboardRooms.get(roomId);
         room.users.set(String(userId), { username, socketId: socket.id });
@@ -83,7 +82,6 @@ export default function handler(req, res) {
 
         if (room.users.size === 0) {
           whiteboardRooms.delete(roomId);
-          console.log(`🗑️ Deleted empty room ${roomId}`);
         }
       });
 
@@ -148,7 +146,6 @@ export default function handler(req, res) {
       });
 
       socket.on("disconnect", () => {
-        console.log("❌ User disconnected:", socket.id);
         let removed = null;
         for (const [userId, info] of onlineUsers.entries()) {
           if (info.socketId === socket.id) {

@@ -123,7 +123,7 @@ export default function Dashboard() {
   }
   
   const showassistant = () => {
-    console.log("AI Assistant Opened")
+   
     setIsAssistantOpen(true)
   }
   
@@ -143,7 +143,7 @@ export default function Dashboard() {
       const data = await res.json()
       setAllTasks(data)
     } catch (error) {
-      console.error("Error while fetching tasks:", error)
+
       toast.error("Failed to fetch tasks")
     } finally {
       setLoadingTasks(false)
@@ -163,7 +163,7 @@ export default function Dashboard() {
       toast.success("Task updated successfully!")
     } catch (error) {
       toast.error("Server error try again later.")
-      console.error("Error in PUT request", error)
+
     } finally {
       setLoadingTasks(false)
     }
@@ -181,7 +181,7 @@ export default function Dashboard() {
       setCompletedTasks((prev) => prev.filter((item) => item._id !== id))
       toast.success("Task deleted successfully!")
     } catch (error) {
-      console.log("Error while deleting task, please wait...")
+
       toast.error("Failed to delete task")
     }
   }
