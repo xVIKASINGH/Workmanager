@@ -46,13 +46,13 @@ Secure login/signup with **OAuth (Google & GitHub)**.
 ## 🛠️ Tech Stack
 - **Frontend**: Next.js, React, Tailwind CSS  
 - **Backend**: Node.js + Express (or Nest/your choice)  
-- **Database**: MongoDB / PostgreSQL (your choice)  
+- **Database**: MongoDB 
 - **Realtime**: Socket.IO  
-- **Charts**: Chart.js (via react-chartjs-2) :contentReference[oaicite:2]{index=2}  
+- **Charts**: Chart.js (via react-chartjs-2) 
 - **AI**: Gemini APIs (assistant & feedback)  
 - **Whiteboard**: Canvas API (HTML5)  
-- **Auth**: OAuth (Google, GitHub) — e.g., NextAuth.js or custom OAuth flow  
-- **Deployment**: Vercel (frontend) + Render/Heroku/DigitalOcean (backend) / Docker
+- **Auth**: OAuth (Google, GitHub) — e.g., NextAuth.js 
+- **Deployment**:  Render
 
 ---
 
@@ -64,7 +64,7 @@ Secure login/signup with **OAuth (Google & GitHub)**.
    - Dashboard using Chart.js for productivity visuals  
 
 2. **API Server (Node/Express)**  
-   - REST / GraphQL endpoints for projects, tasks, profiles, and notifications  
+   - REST  endpoints for projects, tasks, profiles, and notifications  
    - Socket.IO server for chat and whiteboard sync  
    - Gemini API proxy for AI assistant/feedback (keep key server-side)
 
@@ -74,7 +74,7 @@ Secure login/signup with **OAuth (Google & GitHub)**.
 4. **Third-party**  
    - OAuth providers (Google, GitHub)  
    - Gemini APIs for AI features  
-   - (Optional) Push notification service (FCM / OneSignal) for mobile/web push
+
 
 ---
 
