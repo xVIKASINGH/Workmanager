@@ -95,18 +95,28 @@ export default function MessagesPage() {
       }
     });
 
-    socket.on("receive-message", (msg) => {
-      setChats((prev) => ({
-        ...prev,
-        [msg.from]: [
-          ...(prev[msg.from] || []),
-          {
-            ...msg,
-            isCurrentUser: msg.from === currentUser
-          }
-        ]
-      }));
-    });
+  socket.on("receive-message", (msg) => {
+  setChats((prev) => {
+    const updatedChats = {
+      ...prev,
+      [msg.from]: [
+        ...(prev[msg.from] || []),
+        {
+          ...msg,
+          isCurrentUser: msg.from === currentUser,
+        },
+      ],
+    };
+
+    // Auto-refresh if the chat is open
+    if (selectedUser && String(selectedUser.userId) === String(msg.from)) {
+      return { ...updatedChats };
+    }
+
+    return updatedChats;
+  });
+});
+
 
     socket.on("user-offline", ({ userId }) => {
       // Optionally handle user offline
@@ -251,16 +261,7 @@ export default function MessagesPage() {
           </p>
         </div>
 
-        {/* Search */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search conversations"
-              className="pl-10"
-            />
-          </div>
-        </div>
+  
 
         {/* Online Users */}
         <div className="flex-1 overflow-hidden">
@@ -341,7 +342,7 @@ export default function MessagesPage() {
                   </div>
                   <div>
                     <h2 className="font-semibold text-gray-900">{selectedUser.username}</h2>
-                    <p className="text-sm text-green-600">Online</p>
+                 
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

@@ -75,6 +75,6 @@ export async function POST(request,{params}) {
 
       } catch (error) {
         console.error("Error occurred",error)
-        return NextResponse.json({message:"eror aa gyti"},{status:500,statusText:"rukja bhai"})
+        return NextResponse.json({message:error.message},{status:500,statusText:"rukja bhai"})
       }
 }

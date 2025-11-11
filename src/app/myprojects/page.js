@@ -101,9 +101,9 @@ const router=useRouter();
               <div>
                 <div className="flex justify-between text-xs text-muted-foreground mb-1">
                   <span>Progress</span>
-                  <span>{project.progress}%</span>
+                  <span>{project.progress.toFixed(0)}%</span>
                 </div>
-                <Progress value={project.progress} className="h-2" />
+                <Progress value={project.progress.toFixed(1)} className="h-2" />
               </div>
               
               <div className="flex items-center text-sm text-muted-foreground">
