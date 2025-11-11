@@ -34,7 +34,6 @@ export default function LoginPage() {
 
     if (!res.error) router.push("/dashboard");
     else {
-      toast.error("Error while login ")
       console.log(res.error);
     }
   };

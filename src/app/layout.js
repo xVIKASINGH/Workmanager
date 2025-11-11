@@ -2,7 +2,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
-
+import { Toaster } from "sonner";
 import { SocketProvider } from "@/helper/SocketProvider/socketcontextprovider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,7 +23,7 @@ export default function RootLayout({ children }) {
         <SessionProvider>
           <SocketProvider>
             {children}
-      
+        <Toaster richColors position="top-right" /> 
           </SocketProvider>
         </SessionProvider>
       </body>
